@@ -7,11 +7,11 @@ namespace wavemodel
         static void Main(string[] args)
         {
             PDESolver pdeSolver = new PDESolver();
-            pdeSolver.init(0.01, 1, 10, 100, 1000);
-            pdeSolver.setCoefficients(0.5, 0.5);
+            pdeSolver.init(0.001, 500, 500, 500, 500);
+            pdeSolver.setCoefficients(1000, 1500);
             double graphStep = 0.01;
             double graphTime = graphStep;
-            while (pdeSolver.gettCurrent() < 5)
+            while (pdeSolver.gettCurrent() < 1)
             {
                 pdeSolver.calcNextStep();
                 Console.WriteLine(pdeSolver.gettCurrent());
