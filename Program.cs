@@ -4,29 +4,31 @@ namespace wavemodel
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main(/*string[] args*/)
         {
             PDESolver pdeSolver = new PDESolver();
-            pdeSolver.init(0.001, 500, 500, 500, 500);
-            pdeSolver.setCoefficients(1000, 1500);
+            pdeSolver.Init(0.001, 500, 500, 500, 500);
+            pdeSolver.SetCoefficients(1000, 1500);
             double graphStep = 0.01;
             double graphTime = graphStep;
-            while (pdeSolver.gettCurrent() < 1)
+
+            while (pdeSolver.GettCurrent() < 1)
             {
-                pdeSolver.calcNextStep();
-                Console.WriteLine(pdeSolver.gettCurrent());
-                if (pdeSolver.gettCurrent() > graphTime)
+                pdeSolver.CalcNextStep();
+                Console.WriteLine(pdeSolver.GettCurrent());
+
+                if (pdeSolver.GettCurrent() > graphTime)
                 {
-                    pdeSolver.saveCurrentValues("outFixed" + graphTime + ".kr");
-                    
+                    pdeSolver.SaveCurrentValues("outFixed" + graphTime + ".kr");
                     graphTime += graphStep;
                 }
             }
-            while (pdeSolver.gettCurrent() < 50)
+
+            while (pdeSolver.GettCurrent() < 50)
             {
-                pdeSolver.calcNextStep();
+                pdeSolver.CalcNextStep();
             }
-            pdeSolver.saveCurrentValues("out.kr");
+            pdeSolver.SaveCurrentValues("out.kr");
         }
     }
 }

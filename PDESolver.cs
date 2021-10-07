@@ -1,12 +1,16 @@
-﻿using System;
+﻿
+using System;
 using System.IO;
+
 namespace wavemodel
 {
     public class PDESolver
     {
+        #region var
+
         double[,] Vx;
         double[,] Vy;
-        double[,] P;
+        double[,] P0;
 
         double tCurrent;
         double dt;
@@ -14,180 +18,178 @@ namespace wavemodel
         double dy;
         double ro;
         double velocity;
-        double lX;
-        double lY;
+        // double lX;
+        // double lY;
         int Nx;
         int Ny;
 
-        public double muX(double y, double t)
+        #endregion
+
+        #region unused 1
+
+        static double MuX(/*double y, double t*/)
+        {
+            return 0.0;
+        }
+        public double NuX(/*double y, double t*/)
+        {
+            return 0.0;
+        }
+        public double MuY(/*double x, double t*/)
+        {
+            return 0.0;
+        }
+        public double NuY(/*double x, double t*/)
+        {
+            return 0.0;
+        }
+        public double Fi(/*double x, double y*/)
+        {
+            return 0.0;
+        }
+        public double Psi(/*double x, double y*/)
         {
             return 0.0;
         }
 
-        public double nuX(double y, double t)
-        {
-            return 0.0;
-        }
+        #endregion
 
-        public double muY(double x, double t)
-        {
-            return 0.0;
-        }
+        #region init
 
-        public double nuY(double x, double t)
-        {
-            return 0.0;
-        }
-
-        public double fi(double x, double y)
-        {
-            return 0.0;
-        }
-
-        public double psi(double x, double y)
-        {
-            return 0.0;
-        }
-
-        double f(int i, int j, double t)
-        {
-            if (i == Nx / 2 && j == Ny / 2 && t < 0.2)
-            {
-                return  Math.Cos(Math.PI * 2 * t);
-            }
-            return 0;
-        }
-
-        public void init(double dt, double lX, double lY, int Nx, int Ny)
+        public void Init(double dt, double lX, double lY, int Nx, int Ny)
         {
             this.Nx = Nx;
             this.Ny = Ny;
             this.dt = dt;
-            this.lX = lX;
+
+            // this.lX = lX;
             this.dx = lX / Nx;
-            this.lY = lY;
+            // this.lY = lY;
             this.dy = lY / Ny;
-            initGrid();
-            tCurrent = dt;
+
+            InitGrid();
+        }
+        void InitGrid()
+        {
+            Vx = new double[Nx + 1, Ny + 1];
+            Vy = new double[Nx + 1, Ny + 1];
+            P0 = new double[Nx + 1, Ny + 1];
+
+            for(int i = 0; i <= Nx; i++)
+                for(int j = 0; j <= Ny; j++)
+                {
+                    Vx[i, j] = 0;
+                    Vy[i, j] = 0;
+                    P0[i, j] = 0;
+                }
+            tCurrent = 0;
         }
 
-        public void setCoefficients(double ro, double velocity)
+        double F(int i, int j, double t)
+        {
+            if(i == Nx / 2 && j == Ny / 2 && t < 0.2)
+            {
+                return Math.Cos(Math.PI * 2 * t);
+            }
+            return 0;
+        }
+        public void SetCoefficients(double ro, double velocity)
         {
             this.ro = ro;
             this.velocity = velocity;
         }
 
-        void initGrid()
+        #endregion
+
+        public void CalcNextStep()
         {
+            FillBoundaries();
+            UpdateV();
+            UpdateP();
 
-            Vx = new double[Nx + 1, Ny + 1];
-            Vy = new double[Nx + 1, Ny + 1];
-            P = new double[Nx + 1, Ny + 1];
-
-            for (int i = 0; i <= Nx; i++)
-            {
-                for (int j = 0; j <= Ny; j++)
-                {
-                    Vx[i, j] = 0;
-                    Vy[i, j] = 0;
-                    P[i, j] = 0;
-                }
-            }
-            tCurrent = 0;
-        }
-
-        public void calcNextStep()
-        {
-            fillBoundaries();
-            updateV();
-            updateP();
             tCurrent += dt;
         }
-
-       
-
-        private void updateV()
+        private void FillBoundaries()
         {
-            double dt_over_dx = dt / dx;
-            double dt_over_dy = dt / dy;
-
-
-            for (int i = 1; i < Nx; i++)
+            for(int i = 0; i <= Nx; i++)
             {
-                for (int j = 1; j < Ny; j++)
-                {
-                   Vx[i,j] += - dt_over_dx / ro * (P[i,j] - P[i - 1,j]);
-                }
+                // double x = dx * i;
+
+                Vx[i, 0] = MuY(/*x, tCurrent*/);
+                Vx[i, Ny] = NuY(/*x, tCurrent*/);
+
+                Vy[i, 0] = MuY(/*x, tCurrent*/);
+                Vy[i, Ny] = NuY(/*x, tCurrent*/);
+
+                P0[i, 0] = MuY(/*x, tCurrent*/);
+                P0[i, Ny] = NuY(/*x, tCurrent*/);
             }
 
-            for (int i = 1; i < Nx; i++)
+            for(int j = 0; j <= Ny; j++)
             {
-                for (int j = 1; j < Ny; j++)
-                {
-                    Vy[i, j] += - dt_over_dy / ro * (P[i, j] - P[i, j - 1]);
-                }
+                // double y = dy * j;
+
+                Vx[0, j] = MuX(/*y, tCurrent*/);
+                Vx[Nx, j] = NuX(/*y, tCurrent*/);
+
+                Vy[0, j] = MuX(/*y, tCurrent*/);
+                Vy[Nx, j] = NuX(/*y, tCurrent*/);
+
+                P0[0, j] = MuX(/*y, tCurrent*/);
+                P0[Nx, j] = NuX(/*y, tCurrent*/);
             }
         }
 
-        private void updateP()
+        //
+
+        private void UpdateV()
         {
-            double dt_ro_c2 = dt * ro * velocity *10/** velocity*/;
-            for (int i = 1; i < Nx; i++)
-            {
-                
-                for (int j = 1; j < Ny; j++)
+            double dt_over_dx = ro * dt / dx;
+            double dt_over_dy = ro * dt / dy;
+
+            for(int i = 1; i < Nx; i++)
+                for(int j = 1; j < Ny; j++)
                 {
+                    //Vx[i, j] += dt_over_dx * (P0[i - 1, j] - 2 * P0[i, j] - P0[i + 1, j]);
+                    //Vy[i, j] += dt_over_dy * (P0[i, j - 1] - 2 * P0[i, j] - P0[i, j + 1]);
 
-                    P[i,j] += -dt_ro_c2 * ((Vx[i+1,j] - Vx[i,j])/dx  + (Vy[i, j+1] - Vy[i, j]))/dy + dt*this.f(i , j , tCurrent);
+                    // FIXIT
+                    Vx[i, j] += -dt_over_dx * (P0[i, j] - P0[i - 1, j]);
+                    Vy[i, j] += -dt_over_dy * (P0[i, j] - P0[i, j - 1]);
                 }
-            }
         }
 
-        private void fillBoundaries()
+        private void UpdateP()
         {
-            for (int i = 0; i <= Nx; i++)
-            {
-                double x = dx * i;
-                Vx[i,0] = muY(x, tCurrent);
-                Vx[i,Ny] = nuY(x, tCurrent);
-                Vy[i, 0] = muY(x, tCurrent);
-                Vy[i, Ny] = nuY(x, tCurrent);
-                P[i, 0] = muY(x, tCurrent);
-                P[i, Ny] = nuY(x, tCurrent);
-            }
+            double dt_ro_c2x = dt * ro * velocity * 10 / dx; /*velocity*/
+            double dt_ro_c2y = dt * ro * velocity * 10 / dy; /*velocity*/
 
-            for (int j = 1; j < Ny; j++)
-            {
-                double y = dy * j;
-                Vx[0,j] = muX(y, tCurrent);
-                Vx[Nx,j] = nuX(y, tCurrent);
-                Vy[0, j] = muX(y, tCurrent);
-                Vy[Nx, j] = nuX(y, tCurrent);
-                P[0, j] = muX(y, tCurrent);
-                P[Nx, j] = nuX(y, tCurrent);
-            }
-
-        }
-
-        public void saveCurrentValues(String fileName)
-        {
-            using(StreamWriter outWriter = 
-                new StreamWriter(fileName, false, System.Text.Encoding.Default))
-            {
-                
-                for (int i = 0; i <= Nx; i+=1)
+            for(int i = 1; i < Nx; i++)
+                for(int j = 1; j < Ny; j++)
                 {
-                    for (int j = 0; j <= Ny; j += 1)
-                    {
-                        outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P[i, j])).Replace(',', '.'));
-                    }
+                    // FIXIT
+                    P0[i, j] +=
+                        -dt_ro_c2x * (Vx[i + 1, j] - Vx[i, j]) +
+                        -dt_ro_c2y * (Vy[i, j + 1] - Vy[i, j]) +
+                        + dt * this.F(i, j, tCurrent);
                 }
-            }
         }
 
-        public double gettCurrent()
+        #region save
+
+        public void SaveCurrentValues(String fileName)
+        {
+            using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
+
+            for(int i = 0; i <= Nx; i += 1)
+                for(int j = 0; j <= Ny; j += 1)
+                    outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P0[i, j])).Replace(',', '.'));
+        }
+        public double GettCurrent()
         {
             return tCurrent;
         }
+
+        #endregion
     }
 }
