@@ -54,11 +54,6 @@ namespace wavemodel
 
         double f(double x, double y, double t)
         {
-            /*if (x < 0.6 * lX && x >= 0.4 * lX
-                && y < 0.6 * lY && y >= 0.4 * lY)
-            {
-                return Math.Cos(20 * t);
-            }*/
             return 0;
         }
 
@@ -130,10 +125,10 @@ namespace wavemodel
                 for (int j = 1; j < Ny; j++)
                 {
                     
-                    uNext[i,j] = (2 - 2 * gammaX - 2 * gammaY) * uCurrent[i,j]
-                    - uPrevious[i,j] + gammaX * (uCurrent[i - 1,j] + uCurrent[i + 1,j])
-                    + gammaY * (uCurrent[i,j - 1] + uCurrent[i,j + 1])
-                    + dt * dt * f(i * dx, j * dy, tCurrent);
+                    uNext[i,j] = (2 - 2 * gammaX - 2 * gammaY) * uCurrent[i,j]- uPrevious[i,j] 
+                        + gammaX * (uCurrent[i - 1,j] + uCurrent[i + 1,j])
+                        + gammaY * (uCurrent[i,j - 1] + uCurrent[i,j + 1])
+                        + dt * dt * f(i * dx, j * dy, tCurrent);
                 }
             }
         }

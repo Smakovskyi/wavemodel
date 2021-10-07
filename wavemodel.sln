@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.808.10
+VisualStudioVersion = 16.0.31624.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wavemodel", "wavemodel\wavemodel.csproj", "{D2F56C7D-1281-4027-9ACA-FC4BBF369165}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wavemodel", "wavemodel.csproj", "{5807D4DB-1D76-48CE-B69A-372973D616F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D2F56C7D-1281-4027-9ACA-FC4BBF369165}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D2F56C7D-1281-4027-9ACA-FC4BBF369165}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2F56C7D-1281-4027-9ACA-FC4BBF369165}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D2F56C7D-1281-4027-9ACA-FC4BBF369165}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5807D4DB-1D76-48CE-B69A-372973D616F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5807D4DB-1D76-48CE-B69A-372973D616F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5807D4DB-1D76-48CE-B69A-372973D616F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5807D4DB-1D76-48CE-B69A-372973D616F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {6A4F4BA3-0A4F-40DE-954A-0443B587A58E}
+		SolutionGuid = {3A8AD3ED-AD07-4C06-B648-334E213A2851}
 	EndGlobalSection
 EndGlobal
