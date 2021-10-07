@@ -177,13 +177,11 @@ namespace wavemodel
                 
                 for (int i = 0; i <= Nx; i+=1)
                 {
-                    for (int j = 0; j <= Ny; j+=1)
+                    for (int j = 0; j <= Ny; j += 1)
                     {
-                        outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P[i,j])).Replace(',','.'));
+                        outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P[i, j])).Replace(',', '.'));
                     }
-
                 }
-
             }
         }
 
