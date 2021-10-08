@@ -175,8 +175,8 @@ namespace wavemodel
                 for(int j = 1; j < Ny; j++)
                 {
                     P0[i, j] -=
-                        -dt_dx_ro * (Vx[i + 1, j] - Vx[i, j]) +
-                        -dt_dy_ro * (Vy[i, j + 1] - Vy[i, j]) +
+                        dt_dx_ro * (Vx[i + 1, j] - Vx[i, j]) +
+                        dt_dy_ro * (Vy[i, j + 1] - Vy[i, j]) -
                         dt * this.F(i, j, tCurrent);
                 }
         }
