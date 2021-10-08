@@ -144,8 +144,8 @@ namespace wavemodel
 
         private void UpdateV()
         {
-            double dt_over_dx = ro * dt / dx;
-            double dt_over_dy = ro * dt / dy;
+            double dt_over_dx = (dt / dx) / ro;
+            double dt_over_dy = (dt / dy) / ro;
 
             for(int i = 1; i < Nx; i++)
                 for(int j = 1; j < Ny; j++)
