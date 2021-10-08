@@ -144,34 +144,40 @@ namespace wavemodel
 
         private void UpdateV()
         {
-            double dt_over_dx = ro * dt / dx;
-            double dt_over_dy = ro * dt / dy;
+            // dt_over_dx = (dt / dy) / ro;
+            // dt_over_dy = (dt / dy) / ro;
+
+            double
+                dt_dx0_r0 = (dt / dx) * (1 / (ro * 1)),
+                dt_dx1_r0 = (dt / dx) * (1 / (ro * 1));
+            double
+                dt_dy0_r0 = (dt / dy) * (1 / (ro * 1)),
+                dt_dy1_r0 = (dt / dy) * (1 / (ro * 1));
+
+            for(int i = 2; i < Nx; i++)
+                for(int j = 1; j < Ny; j++)
+                    Vx[i, j] -= dt_dx1_r0 * P0[i, j] - dt_dx0_r0 * P0[i - 1, j];
 
             for(int i = 1; i < Nx; i++)
-                for(int j = 1; j < Ny; j++)
-                {
-                    //Vx[i, j] += dt_over_dx * (P0[i - 1, j] - 2 * P0[i, j] - P0[i + 1, j]);
-                    //Vy[i, j] += dt_over_dy * (P0[i, j - 1] - 2 * P0[i, j] - P0[i, j + 1]);
-
-                    // FIXIT
-                    Vx[i, j] += -dt_over_dx * (P0[i, j] - P0[i - 1, j]);
-                    Vy[i, j] += -dt_over_dy * (P0[i, j] - P0[i, j - 1]);
-                }
+                for(int j = 2; j < Ny; j++)
+                    Vy[i, j] -= dt_dy1_r0 * P0[i, j] - dt_dy0_r0 * P0[i, j - 1];
         }
 
         private void UpdateP()
         {
-            double dt_ro_c2x = dt * ro * velocity * 10 / dx; /*velocity*/
-            double dt_ro_c2y = dt * ro * velocity * 10 / dy; /*velocity*/
+            //double dt_ro_c2x = dt * ro * velocity * 10 / dx; /*velocity*/
+            //double dt_ro_c2y = dt * ro * velocity * 10 / dy; /*velocity*/
+
+            double dt_dx_ro = (dt / dx) * ro * velocity * velocity;
+            double dt_dy_ro = (dt / dy) * ro * velocity * velocity;
 
             for(int i = 1; i < Nx; i++)
                 for(int j = 1; j < Ny; j++)
                 {
-                    // FIXIT
-                    P0[i, j] +=
-                        -dt_ro_c2x * (Vx[i + 1, j] - Vx[i, j]) +
-                        -dt_ro_c2y * (Vy[i, j + 1] - Vy[i, j]) +
-                        + dt * this.F(i, j, tCurrent);
+                    P0[i, j] -=
+                        -dt_dx_ro * (Vx[i + 1, j] - Vx[i, j]) +
+                        -dt_dy_ro * (Vy[i, j + 1] - Vy[i, j]) +
+                        dt * this.F(i, j, tCurrent);
                 }
         }
 
