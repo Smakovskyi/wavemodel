@@ -27,27 +27,31 @@ namespace wavemodel
 
         #region unused 1
 
-        static double MuX(/*double y, double t*/)
+        //x = 0 border
+        static double MuX(double y, double t)
         {
             return 0.0;
         }
-        public double NuX(/*double y, double t*/)
+        //x = x_max border
+        public double NuX(double y, double t)
         {
             return 0.0;
         }
-        public double MuY(/*double x, double t*/)
+        //y = 0
+        public double MuY(double x, double t)
         {
             return 0.0;
         }
-        public double NuY(/*double x, double t*/)
+        //y = y_max
+        public double NuY(double x, double t)
         {
             return 0.0;
         }
-        public double Fi(/*double x, double y*/)
+        public double Fi(double x, double y)
         {
             return 0.0;
         }
-        public double Psi(/*double x, double y*/)
+        public double Psi(double x, double y)
         {
             return 0.0;
         }
@@ -113,30 +117,31 @@ namespace wavemodel
         {
             for(int i = 0; i <= Nx; i++)
             {
-                // double x = dx * i;
+                 double x = dx * i;
 
-                Vx[i, 0] = MuY(/*x, tCurrent*/);
-                Vx[i, Ny] = NuY(/*x, tCurrent*/);
+                Vx[i, 0] = MuY(x, tCurrent);
+                Vy[i, 0] = MuY(x, tCurrent);
+                P0[i, 0] = MuY(x, tCurrent);
 
-                Vy[i, 0] = MuY(/*x, tCurrent*/);
-                Vy[i, Ny] = NuY(/*x, tCurrent*/);
-
-                P0[i, 0] = MuY(/*x, tCurrent*/);
-                P0[i, Ny] = NuY(/*x, tCurrent*/);
+                //Vx[i, Ny] = NuY(x, tCurrent);
+                //Vy[i, Ny] = NuY(x, tCurrent);
+                Vx[i, Ny] = 0;
+                Vy[i, Ny] = 0;
+                P0[i, Ny] = P0[i, Ny-1];
             }
 
-            for(int j = 0; j <= Ny; j++)
+            for (int j = 0; j <= Ny; j++)
             {
-                // double y = dy * j;
+                 double y = dy * j;
 
-                Vx[0, j] = MuX(/*y, tCurrent*/);
-                Vx[Nx, j] = NuX(/*y, tCurrent*/);
+                Vx[0, j] = MuX(y, tCurrent);
+                Vx[Nx, j] = NuX(y, tCurrent);
 
-                Vy[0, j] = MuX(/*y, tCurrent*/);
-                Vy[Nx, j] = NuX(/*y, tCurrent*/);
+                Vy[0, j] = MuX(y, tCurrent);
+                Vy[Nx, j] = NuX(y, tCurrent);
 
-                P0[0, j] = MuX(/*y, tCurrent*/);
-                P0[Nx, j] = NuX(/*y, tCurrent*/);
+                P0[0, j] = MuX(y, tCurrent);
+                P0[Nx, j] = NuX(y, tCurrent);
             }
         }
 
@@ -148,7 +153,7 @@ namespace wavemodel
             // dt_over_dy = (dt / dy) / ro;
 
             double dt_dx_ro = dt / (dx * ro);
-            double dt_dy_ro = (dt / dy) * (1 / (ro * 1));
+            double dt_dy_ro = dt / (dy * ro);
                 
             for(int i = 1; i < Nx; i++)
                 for(int j = 1; j < Ny; j++)
