@@ -10,7 +10,7 @@ namespace wavemodel
 
         double[,] Vx;
         double[,] Vy;
-        double[,] P0;
+        double[,] P;
 
         double tCurrent;
         double dt;
@@ -77,15 +77,17 @@ namespace wavemodel
         {
             Vx = new double[Nx + 1, Ny + 1];
             Vy = new double[Nx + 1, Ny + 1];
-            P0 = new double[Nx + 1, Ny + 1];
+            P = new double[Nx + 1, Ny + 1];
 
-            for(int i = 0; i <= Nx; i++)
-                for(int j = 0; j <= Ny; j++)
+            for (int i = 0; i <= Nx; i++)
+            {
+                for (int j = 0; j <= Ny; j++)
                 {
                     Vx[i, j] = 0;
                     Vy[i, j] = 0;
-                    P0[i, j] = 0;
+                    P[i, j] = 0;
                 }
+            }
             tCurrent = 0;
         }
 
@@ -121,13 +123,13 @@ namespace wavemodel
 
                 Vx[i, 0] = MuY(x, tCurrent);
                 Vy[i, 0] = MuY(x, tCurrent);
-                P0[i, 0] = MuY(x, tCurrent);
+                P[i, 0] = MuY(x, tCurrent);
 
                 //Vx[i, Ny] = NuY(x, tCurrent);
                 //Vy[i, Ny] = NuY(x, tCurrent);
                 Vx[i, Ny] = 0;
                 Vy[i, Ny] = 0;
-                P0[i, Ny] = P0[i, Ny-1];
+                P[i, Ny] = P[i, Ny-1];
             }
 
             for (int j = 0; j <= Ny; j++)
@@ -140,8 +142,8 @@ namespace wavemodel
                 Vy[0, j] = MuX(y, tCurrent);
                 Vy[Nx, j] = NuX(y, tCurrent);
 
-                P0[0, j] = MuX(y, tCurrent);
-                P0[Nx, j] = NuX(y, tCurrent);
+                P[0, j] = MuX(y, tCurrent);
+                P[Nx, j] = NuX(y, tCurrent);
             }
         }
 
@@ -154,14 +156,21 @@ namespace wavemodel
 
             double dt_dx_ro = dt / (dx * ro);
             double dt_dy_ro = dt / (dy * ro);
-                
-            for(int i = 1; i < Nx; i++)
-                for(int j = 1; j < Ny; j++)
-                    Vx[i, j] -= dt_dx_ro * (P0[i, j] -   P0[i - 1, j]);
 
-            for(int i = 1; i < Nx; i++)
-                for(int j = 1; j < Ny; j++)
-                    Vy[i, j] -= dt_dy_ro * (P0[i, j] -  P0[i, j - 1]);
+            for (int i = 1; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    Vx[i, j] -= dt_dx_ro * (P[i, j] - P[i - 1, j]);
+                }
+            }
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 1; j < Ny; j++)
+                {
+                    Vy[i, j] -= dt_dy_ro * (P[i, j] - P[i, j - 1]);
+                }
+            }
         }
 
         private void UpdateP()
@@ -172,10 +181,10 @@ namespace wavemodel
             double dt_dx_ro = (dt / dx) * ro * velocity * velocity;
             double dt_dy_ro = (dt / dy) * ro * velocity * velocity;
 
-            for(int i = 1; i < Nx; i++)
-                for(int j = 1; j < Ny; j++)
+            for(int i = 0; i < Nx; i++)
+                for(int j = 0; j < Ny; j++)
                 {
-                    P0[i, j] -=
+                    P[i, j] -=
                         dt_dx_ro * (Vx[i + 1, j] - Vx[i, j]) +
                         dt_dy_ro * (Vy[i, j + 1] - Vy[i, j]) -
                         dt * this.F(i, j, tCurrent);
@@ -190,7 +199,7 @@ namespace wavemodel
 
             for(int i = 0; i <= Nx; i += 1)
                 for(int j = 0; j <= Ny; j += 1)
-                    outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P0[i, j])).Replace(',', '.'));
+                    outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P[i, j])).Replace(',', '.'));
         }
         public double GettCurrent()
         {
