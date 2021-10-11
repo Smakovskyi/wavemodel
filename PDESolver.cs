@@ -87,7 +87,7 @@ namespace wavemodel
 
         double F(int i, int j, double t)
         {
-            if(i == Nx / 2 && j == Ny / 2 && t < 0.2)
+            if( (Math.Abs( i - Nx / 2) <= 2) && (Math.Abs(j - Ny / 2) <= 2) && t < 0.2)
             {
                 return Math.Cos(Math.PI * 2 * t);
             }
