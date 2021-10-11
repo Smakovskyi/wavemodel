@@ -9,17 +9,19 @@ namespace wavemodel
             PDESolver pdeSolver = new PDESolver();
             pdeSolver.Init(0.0003, 300, 300, 300, 300);
             pdeSolver.SetCoefficients(1000, 1500);
-            double graphStep = 0.02;
+            double graphStep = 0.01;
             double graphTime = graphStep;
 
-            while (pdeSolver.GettCurrent() < 2)
+            while (pdeSolver.GettCurrent() < 0.5)
             {
                 pdeSolver.CalcNextStep();
                 Console.WriteLine(pdeSolver.GettCurrent());
 
                 if (pdeSolver.GettCurrent() > graphTime)
                 {
-                    pdeSolver.SaveCurrentValues("outFixed" + graphTime + ".kr");
+                    pdeSolver.SaveCurrentValuesP("outFixedP" +  Math.Round(graphTime, 2) + ".kr");
+                    pdeSolver.SaveCurrentValuesVx("outFixedVx" + Math.Round(graphTime, 2) + ".kr");
+                    pdeSolver.SaveCurrentValuesVy("outFixedVy" + Math.Round(graphTime, 2) + ".kr");
                     graphTime += graphStep;
                 }
             }

@@ -109,42 +109,57 @@ namespace wavemodel
 
         public void CalcNextStep()
         {
-            FillBoundaries();
+            
             UpdateV();
+            FillBoundaries();
             UpdateP();
+            FillBoundaries();
 
             tCurrent += dt;
         }
         private void FillBoundaries()
         {
-            for(int i = 0; i <= Nx; i++)
-            {
-                 double x = dx * i;
+            //for(int i = 0; i <= Nx; i++)
+            //{
+            //     double x = dx * i;
 
-                Vx[i, 0] = MuY(x, tCurrent);
-                Vy[i, 0] = MuY(x, tCurrent);
-                P[i, 0] = MuY(x, tCurrent);
+            //    Vx[i, 0] = MuY(x, tCurrent);
+            //    Vy[i, 0] = MuY(x, tCurrent);
+            //    P[i, 0] = MuY(x, tCurrent);
+            //    P[i, 1] = MuY(x, tCurrent);
+            //    Vx[i, 1] = MuY(x, tCurrent);
+            //    Vy[i, 1] = MuY(x, tCurrent);
 
-                //Vx[i, Ny] = NuY(x, tCurrent);
-                //Vy[i, Ny] = NuY(x, tCurrent);
-                Vx[i, Ny] = 0;
-                Vy[i, Ny] = 0;
-                P[i, Ny] = P[i, Ny-1];
-            }
+            //    //Vx[i, Ny] = NuY(x, tCurrent);
+            //    //Vy[i, Ny] = NuY(x, tCurrent);
+            //    Vx[i, Ny] = 0;
+            //    Vy[i, Ny] = 0;
+            //    P[i, Ny] = P[i, Ny-1];
+            //}
 
+            //for (int j = 0; j <= Ny; j++)
+            //{
+            //     double y = dy * j;
+
+            //    Vx[0, j] = MuX(y, tCurrent);
+            //    Vx[Nx, j] = NuX(y, tCurrent);
+
+            //    Vy[0, j] = MuX(y, tCurrent);
+            //    Vy[Nx, j] = NuX(y, tCurrent);
+
+            //    P[0, j] = MuX(y, tCurrent);
+            //    P[Nx, j] = NuX(y, tCurrent);
+            //}
             for (int j = 0; j <= Ny; j++)
             {
-                 double y = dy * j;
-
-                Vx[0, j] = MuX(y, tCurrent);
-                Vx[Nx, j] = NuX(y, tCurrent);
-
-                Vy[0, j] = MuX(y, tCurrent);
-                Vy[Nx, j] = NuX(y, tCurrent);
-
-                P[0, j] = MuX(y, tCurrent);
-                P[Nx, j] = NuX(y, tCurrent);
+                P[0, j] = 0;
+                P[1, j] = 0;
+                Vx[0, j] = 0;
+                Vx[1, j] = 0;
+                Vy[0, j] = 0;
+                Vy[1, j] = 0;
             }
+
         }
 
         //
@@ -193,13 +208,29 @@ namespace wavemodel
 
         #region save
 
-        public void SaveCurrentValues(String fileName)
+        public void SaveCurrentValuesP(String fileName)
         {
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
             for(int i = 0; i <= Nx; i += 1)
                 for(int j = 0; j <= Ny; j += 1)
-                    outWriter.WriteLine((dx * i + " " + dy * j + " " + Math.Abs(P[i, j])).Replace(',', '.'));
+                    outWriter.WriteLine((dx * i + " " + dy * j + " " + P[i, j]).Replace(',', '.'));
+        }
+        public void SaveCurrentValuesVx(String fileName)
+        {
+            using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
+
+            for (int i = 0; i <= Nx; i += 1)
+                for (int j = 0; j <= Ny; j += 1)
+                    outWriter.WriteLine((dx * i + " " + dy * j + " " + Vx[i, j]).Replace(',', '.'));
+        }
+        public void SaveCurrentValuesVy(String fileName)
+        {
+            using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
+
+            for (int i = 0; i <= Nx; i += 1)
+                for (int j = 0; j <= Ny; j += 1)
+                    outWriter.WriteLine((dx * i + " " + dy * j + " " + Vy[i, j]).Replace(',', '.'));
         }
         public double GettCurrent()
         {
