@@ -147,20 +147,16 @@ namespace wavemodel
             // dt_over_dx = (dt / dy) / ro;
             // dt_over_dy = (dt / dy) / ro;
 
-            double
-                dt_dx0_r0 = (dt / dx) * (1 / (ro * 1)),
-                dt_dx1_r0 = (dt / dx) * (1 / (ro * 1));
-            double
-                dt_dy0_r0 = (dt / dy) * (1 / (ro * 1)),
-                dt_dy1_r0 = (dt / dy) * (1 / (ro * 1));
-
-            for(int i = 2; i < Nx; i++)
+            double dt_dx_ro = dt / (dx * ro);
+            double dt_dy_ro = (dt / dy) * (1 / (ro * 1));
+                
+            for(int i = 1; i < Nx; i++)
                 for(int j = 1; j < Ny; j++)
-                    Vx[i, j] -= dt_dx1_r0 * P0[i, j] - dt_dx0_r0 * P0[i - 1, j];
+                    Vx[i, j] -= dt_dx_ro * (P0[i, j] -   P0[i - 1, j]);
 
             for(int i = 1; i < Nx; i++)
-                for(int j = 2; j < Ny; j++)
-                    Vy[i, j] -= dt_dy1_r0 * P0[i, j] - dt_dy0_r0 * P0[i, j - 1];
+                for(int j = 1; j < Ny; j++)
+                    Vy[i, j] -= dt_dy_ro * (P0[i, j] -  P0[i, j - 1]);
         }
 
         private void UpdateP()
