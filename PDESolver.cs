@@ -77,13 +77,13 @@ namespace wavemodel
         {
             Vx = new double[Nx + 1, Ny];
             Vy = new double[Nx, Ny + 1];
-            P = new double[Nx , Ny];
+            P = new double[Nx, Ny];
 
             for (int i = 0; i < Nx; i++)
             {
                 for (int j = 0; j < Ny; j++)
                 {
-                   P[i, j] = 0;
+                    P[i, j] = 0;
                 }
             }
             for (int i = 0; i <= Nx; i++)
@@ -105,7 +105,7 @@ namespace wavemodel
 
         double F(int i, int j, double t)
         {
-            if( (Math.Abs( i - Nx / 2) <= 2) && (Math.Abs(j - Ny / 2) <= 2) && t < 0.2)
+            if ((Math.Abs(i - Nx / 2) <= 2) && (Math.Abs(j - Ny / 2) <= 2) && t < 0.2)
             {
                 return Math.Cos(Math.PI * 2 * t);
             }
@@ -121,13 +121,18 @@ namespace wavemodel
 
         public void CalcNextStep()
         {
-            
+
             UpdateV();
-            FillBoundariesV();
+            //FillBoundariesV();
             UpdateP();
             //FillBoundariesP();
-
+            
             tCurrent += dt;
+        }
+
+        private void MurBoundaries()
+        {
+
         }
 
         public void FillBoundariesV()
