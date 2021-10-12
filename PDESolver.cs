@@ -398,6 +398,7 @@ namespace wavemodel
         }
 
         #endregion
+
         //
 
         private void UpdateV()
@@ -432,19 +433,23 @@ namespace wavemodel
         }
         public void SaveCurrentValuesVx(String fileName)
         {
+            /*
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + Vx[i, j]).Replace(',', '.'));
+            */
         }
         public void SaveCurrentValuesVy(String fileName)
         {
+            /*
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + Vy[i, j]).Replace(',', '.'));
+            */
         }
 
         public double GettCurrent()
