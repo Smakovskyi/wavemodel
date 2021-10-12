@@ -8,62 +8,62 @@ namespace wavemodel
     {
         #region var
 
-        double[,] Vx;
-        double[,] Vy;
-        double[,] P0;
+        float[,] Vx;
+        float[,] Vy;
+        float[,] P0;
 
         /* https://github.com/nagataniyoshiki/FDTD_processing/blob/master/acoustic_2d_fdtd_processing2/acoustic_2d_fdtd_processing2.pde */
-        double[,] Mur_X1;   // Mur's 2nd-Order Absorption Layer
-        double[,] Mur_X2;   // Mur's 2nd-Order Absorption Layer
-        double[,] Mur_Y1;   // Mur's 2nd-Order Absorption Layer
-        double[,] Mur_Y2;   // Mur's 2nd-Order Absorption Layer
+        float[,] Mur_X1;   // Mur's 2nd-Order Absorption Layer
+        float[,] Mur_X2;   // Mur's 2nd-Order Absorption Layer
+        float[,] Mur_Y1;   // Mur's 2nd-Order Absorption Layer
+        float[,] Mur_Y2;   // Mur's 2nd-Order Absorption Layer
 
-        double nCurrent;
-        double tCurrent;
-        double dt;
-        double dx;
-        double dy;
-        double ro;
-        double velocity;
+        float nCurrent;
+        float tCurrent;
+        float dt;
+        float dx;
+        float dy;
+        float ro;
+        float velocity;
 
         int Nx;
         int Ny;
 
-        double dt_dx_0ro = 0;
-        double dt_dy_0ro = 0;
+        float dt_dx_0ro = 0;
+        float dt_dy_0ro = 0;
 
-        double dt_dx_vro = 0;
-        double dt_dy_vro = 0;
+        float dt_dx_vro = 0;
+        float dt_dy_vro = 0;
 
         #endregion
 
         #region unused 1
 
         //x = 0 border
-        static double MuX(double y, double t)
+        static float MuX(float y, float t)
         {
             return 0;
         }
         //x = x_max border
-        public double NuX(double y, double t)
+        public float NuX(float y, float t)
         {
             return 0;
         }
         //y = 0
-        public double MuY(double x, double t)
+        public float MuY(float x, float t)
         {
             return 0;
         }
         //y = y_max
-        public double NuY(double x, double t)
+        public float NuY(float x, float t)
         {
             return 0;
         }
-        public double Fi(double x, double y)
+        public float Fi(float x, float y)
         {
             return 0;
         }
-        public double Psi(double x, double y)
+        public float Psi(float x, float y)
         {
             return 0;
         }
@@ -72,7 +72,7 @@ namespace wavemodel
 
         #region init
 
-        public void Init(double dt, double lX, double lY, int Nx, int Ny)
+        public void Init(float dt, float lX, float lY, int Nx, int Ny)
         {
             this.Nx = Nx;
             this.Ny = Ny;
@@ -87,9 +87,9 @@ namespace wavemodel
         {
             #region init P0, Vx, Vy
 
-            P0 = new double[Nx, Ny];
-            Vx = new double[Nx + 1, Ny];
-            Vy = new double[Nx, Ny + 1];
+            P0 = new float[Nx, Ny];
+            Vx = new float[Nx + 1, Ny];
+            Vy = new float[Nx, Ny + 1];
 
             for (int i = 0; i <= Nx; i++)
                 for (int j = 0; j < Ny; j++)
@@ -114,10 +114,10 @@ namespace wavemodel
 
             #region init Mur
 
-            Mur_X1 = new double[4, Ny + 1];
-            Mur_X2 = new double[4, Ny + 1];
-            Mur_Y1 = new double[Nx + 1, 4];
-            Mur_Y2 = new double[Nx + 1, 4];
+            Mur_X1 = new float[4, Ny + 1];
+            Mur_X2 = new float[4, Ny + 1];
+            Mur_Y1 = new float[Nx + 1, 4];
+            Mur_Y2 = new float[Nx + 1, 4];
 
             for(int i = 0; i <= Nx; i++)
             {
@@ -148,14 +148,14 @@ namespace wavemodel
             tCurrent = 0;
         }
 
-        double F(int i, int j, double t)
+        float F(int i, int j, float t)
         {
             if( (Math.Abs( i - Nx / 2) <= 2) && (Math.Abs(j - Ny / 2) <= 2) && t < 0.2)
-                return (double)Math.Cos(Math.PI * 2 * t);
+                return (float)Math.Cos(Math.PI * 2 * t);
 
             return 0;
         }
-        public void SetCoefficients(double ro, double velocity)
+        public void SetCoefficients(float ro, float velocity)
         {
             this.ro = ro;
             this.velocity = velocity;
@@ -168,7 +168,7 @@ namespace wavemodel
             UpdateV();
             UpdateP();
 
-            FillBoundaries_null();
+            //FillBoundaries_null();
             //FillBoundaries_1ndOrder();
             //FillBoundaries_2ndOrder();
 
@@ -179,8 +179,6 @@ namespace wavemodel
 
         private void FillBoundaries_null()
         {
-            #region Boundaries
-
             for(int j = 0; j < Ny; j++)
             {
                 //P0[0, j] = 0;
@@ -200,21 +198,48 @@ namespace wavemodel
                 //Vy[i, 0] = 0;
                 //Vy[i, Ny] = 0;
             }
+        }
+
+        private void FillBoundaries_1ndOrder()
+        {
+            #region Mur's 1st Order Absorption
+
+            float dummyABS = (velocity * dt - dx) / (velocity * dt + dx);
+
+            for(int i = 1; i < Nx - 1; i++)
+            {
+                P0[i, 0] =
+                    Mur_Y1[i, 1] + dummyABS * (P0[i, 1] - Mur_Y1[i, 0]);
+                P0[i, Ny - 1] =
+                    Mur_Y1[i, 2] + dummyABS * (P0[i, Ny - 2] - Mur_Y1[i, 3]);
+            }
+
+            for(int j = 1; j < Ny - 1; j++)
+            {
+                P0[0, j] =
+                    Mur_X1[1, j] + dummyABS * (P0[1, j] - Mur_X1[0, j]);
+                P0[Nx - 1, j] =
+                    Mur_X1[2, j] + dummyABS * (P0[Nx - 2, j] - Mur_X1[3, j]);
+            }
 
             #endregion
 
-            #region source
+            #region Copy Previous Values
 
-            double freq = 1000;
-
-            double Cos = Math.Cos(2 * Math.PI * freq * nCurrent * dt);
-            double Sin = Math.Sin(2 * Math.PI * freq * nCurrent * dt);
-            double Amp = (1 - Cos) / 2 * Sin;
-
-            /*
-            if(nCurrent++ < ((double)1 / freq) / dt)
-                P0[Nx / 2, Ny / 2] = Amp;
-            */
+            for(int i = 0; i < Nx; i++)
+            {
+                Mur_Y1[i, 0] = P0[i, 0];
+                Mur_Y1[i, 1] = P0[i, 1];
+                Mur_Y1[i, 2] = P0[i, Ny - 2];
+                Mur_Y1[i, 3] = P0[i, Ny - 1];
+            }
+            for(int j = 0; j < Ny; j++)
+            {
+                Mur_X1[0, j] = P0[0, j];
+                Mur_X1[1, j] = P0[1, j];
+                Mur_X1[2, j] = P0[Nx - 2, j];
+                Mur_X1[3, j] = P0[Nx - 1, j];
+            }
 
             #endregion
         }
@@ -225,46 +250,38 @@ namespace wavemodel
 
             #region Mur's 2nd Order Absorption
 
+            float dummyABS0 = +(velocity * dt - dx) / (velocity * dt + dx);
+            float dummyABS1 = +(2 * dx) / (velocity * dt + dx);
+            float dummyABS2 = +(dx * velocity * velocity * dt * dt) / (2 * dx * dx * (velocity * dt + dx));
+
             for(i = 2; i < Nx - 2; i++)
             {
                 P0[i, 0] =
                             -Mur_Y2[i, 1]
-                            + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, 1] + Mur_Y2[i, 0])
-                            + (2 * dx) / (velocity * dt + dx) * (Mur_Y1[i, 0] + Mur_Y1[i, 1])
-                            + (dx * velocity * velocity * dt * dt) / (2 * dx * dx * (velocity * dt + dx))
-                                * ( + Mur_Y1[i + 1, 0] - 2 * Mur_Y1[i, 0]
-                                    + Mur_Y1[i - 1, 0] + Mur_Y1[i + 1, 1]
-                                    - 2 * Mur_Y1[i, 1] + Mur_Y1[i - 1, 1]);
+                            + dummyABS0 * (P0[i, 1] + Mur_Y2[i, 0])
+                            + dummyABS1 * (Mur_Y1[i, 0] + Mur_Y1[i, 1])
+                            + dummyABS2 * (Mur_Y1[i + 1, 0] - 2 * Mur_Y1[i, 0] + Mur_Y1[i - 1, 0] + Mur_Y1[i + 1, 1] - 2 * Mur_Y1[i, 1] + Mur_Y1[i - 1, 1]);
 
                 P0[i, Ny - 1] =
                             -Mur_Y2[i, 2]
-                            + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, Ny - 2] + Mur_Y2[i, 3])
-                            + (2 * dx) / (velocity * dt + dx) * (Mur_Y1[i, 3] + Mur_Y1[i, 2])
-                            + (dx * velocity * velocity * dt * dt) / (2 * dx * dx * (velocity * dt + dx))
-                                * ( + Mur_Y1[i + 1, 3] - 2 * Mur_Y1[i, 3]
-                                    + Mur_Y1[i - 1, 3] + Mur_Y1[i + 1, 2]
-                                    - 2 * Mur_Y1[i, 2] + Mur_Y1[i - 1, 2]);
+                            + dummyABS0 * (P0[i, Ny - 2] + Mur_Y2[i, 3])
+                            + dummyABS1 * (Mur_Y1[i, 3] + Mur_Y1[i, 2])
+                            + dummyABS2 * (Mur_Y1[i + 1, 3] - 2 * Mur_Y1[i, 3] + Mur_Y1[i - 1, 3] + Mur_Y1[i + 1, 2] - 2 * Mur_Y1[i, 2] + Mur_Y1[i - 1, 2]);
             }
 
             for(j = 2; j < Ny - 2; j++)
             {
                 P0[0, j] =
                             -Mur_X2[1, j]
-                            + (velocity * dt - dx) / (velocity * dt + dx) * (P0[1, j] + Mur_X2[0, j])
-                            + (2 * dx) / (velocity * dt + dx) * (Mur_X1[0, j] + Mur_X1[1, j])
-                            + (dx * velocity * velocity * dt * dt) / (2 * dx * dx * (velocity * dt + dx))
-                                * ( + Mur_X1[0, j + 1] - 2 * Mur_X1[0, j]
-                                    + Mur_X1[0, j - 1] + Mur_X1[1, j + 1]
-                                    - 2 * Mur_X1[1, j] + Mur_X1[1, j - 1]);
+                            + dummyABS0 * (P0[1, j] + Mur_X2[0, j])
+                            + dummyABS1 * (Mur_X1[0, j] + Mur_X1[1, j])
+                            + dummyABS2 * (Mur_X1[0, j + 1] - 2 * Mur_X1[0, j] + Mur_X1[0, j - 1] + Mur_X1[1, j + 1] - 2 * Mur_X1[1, j] + Mur_X1[1, j - 1]);
 
                 P0[Nx - 1, j] =
                             -Mur_X2[2, j]
-                            + (velocity * dt - dx) / (velocity * dt + dx) * (P0[Nx - 2, j] + Mur_X2[3, j])
+                            + dummyABS0 * (P0[Nx - 2, j] + Mur_X2[3, j])
                             + (2 * dx) / (velocity * dt + dx) * (Mur_X1[3, j] + Mur_X1[2, j])
-                            + (dx * velocity * velocity * dt * dt) / (2 * dx * dx * (velocity * dt + dx))
-                                * ( + Mur_X1[3, j + 1] - 2 * Mur_X1[3, j]
-                                    + Mur_X1[3, j - 1] + Mur_X1[2, j + 1]
-                                    - 2 * Mur_X1[2, j] + Mur_X1[2, j - 1]);
+                            + dummyABS2 * (Mur_X1[3, j + 1] - 2 * Mur_X1[3, j] + Mur_X1[3, j - 1] + Mur_X1[2, j + 1] - 2 * Mur_X1[2, j] + Mur_X1[2, j - 1]);
             }
 
             #endregion
@@ -273,26 +290,34 @@ namespace wavemodel
 
             i = 1;
 
-            P0[i, 0] = Mur_Y1[i, 1] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, 1] - Mur_Y1[i, 0]);
-            P0[i, Ny - 1] = Mur_Y1[i, 2] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, Ny - 2] - Mur_Y1[i, 3]);
+            P0[i, 0] =
+                Mur_Y1[i, 1] + dummyABS0 * (P0[i, 1] - Mur_Y1[i, 0]);
+            P0[i, Ny - 1] =
+                Mur_Y1[i, 2] + dummyABS0 * (P0[i, Ny - 2] - Mur_Y1[i, 3]);
 
 
             i = Nx - 2;
 
-            P0[i, 0] = Mur_Y1[i, 1] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, 1] - Mur_Y1[i, 0]);
-            P0[i, Ny - 1] = Mur_Y1[i, 2] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, Ny - 2] - Mur_Y1[i, 3]);
+            P0[i, 0] =
+                Mur_Y1[i, 1] + dummyABS0 * (P0[i, 1] - Mur_Y1[i, 0]);
+            P0[i, Ny - 1] =
+                Mur_Y1[i, 2] + dummyABS0 * (P0[i, Ny - 2] - Mur_Y1[i, 3]);
 
 
             j = 1;
 
-            P0[0, j] = Mur_X1[1, j] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[1, j] - Mur_X1[0, j]);
-            P0[Nx - 1, j] = Mur_X1[2, j] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[Nx - 2, j] - Mur_X1[3, j]);
+            P0[0, j] =
+                Mur_X1[1, j] + dummyABS0 * (P0[1, j] - Mur_X1[0, j]);
+            P0[Nx - 1, j] =
+                Mur_X1[2, j] + dummyABS0 * (P0[Nx - 2, j] - Mur_X1[3, j]);
 
 
             j = Ny - 2;
 
-            P0[0, j] = Mur_X1[1, j] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[1, j] - Mur_X1[0, j]);
-            P0[Nx - 1, j] = Mur_X1[2, j] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[Nx - 2, j] - Mur_X1[3, j]);
+            P0[0, j] =
+                Mur_X1[1, j] + dummyABS0 * (P0[1, j] - Mur_X1[0, j]);
+            P0[Nx - 1, j] =
+                Mur_X1[2, j] + dummyABS0 * (P0[Nx - 2, j] - Mur_X1[3, j]);
 
             #endregion
 
@@ -327,72 +352,6 @@ namespace wavemodel
                 Mur_X1[2, j] = P0[Nx - 2, j];
                 Mur_X1[3, j] = P0[Nx - 1, j];
             }
-
-            #endregion
-
-
-            #region source
-
-            double freq = 1;
-
-            double Cos = Math.Cos(2 * Math.PI * freq * tCurrent);
-            double Sin = Math.Sin(2 * Math.PI * freq * tCurrent);
-            double Amp = (1 - Cos) / 2 * Sin;
-
-            if(tCurrent < ((double)1 / freq) / dt)
-                P0[Nx / 2, Ny / 2] += Amp;
-
-            #endregion
-        }
-
-        private void FillBoundaries_1ndOrder()
-        {
-            #region Mur's 1st Order Absorption
-
-            for(int i = 1; i < Nx - 1; i++)
-            {
-                P0[i, 0] = Mur_Y1[i, 1] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, 1] - Mur_Y1[i, 0]);
-                P0[i, Ny - 1] = Mur_Y1[i, 2] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[i, Ny - 2] - Mur_Y1[i, 3]);
-            }
-
-            for(int j = 1; j < Ny - 1; j++)
-            {
-                P0[0, j] = Mur_X1[1, j] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[1, j] - Mur_X1[0, j]);
-                P0[Nx - 1, j] = Mur_X1[2, j] + (velocity * dt - dx) / (velocity * dt + dx) * (P0[Nx - 2, j] - Mur_X1[3, j]);
-            }
-
-            #endregion
-
-            #region Copy Previous Values
-
-            for(int i = 0; i < Nx; i++)
-            {
-                Mur_Y1[i, 0] = P0[i, 0];
-                Mur_Y1[i, 1] = P0[i, 1];
-                Mur_Y1[i, 2] = P0[i, Ny - 2];
-                Mur_Y1[i, 3] = P0[i, Ny - 1];
-            }
-            for(int j = 0; j < Ny; j++)
-            {
-                Mur_X1[0, j] = P0[0, j];
-                Mur_X1[1, j] = P0[1, j];
-                Mur_X1[2, j] = P0[Nx - 2, j];
-                Mur_X1[3, j] = P0[Nx - 1, j];
-            }
-
-            #endregion
-
-
-            #region source
-
-            double freq = 1;
-
-            double Cos = Math.Cos(2 * Math.PI * freq * tCurrent);
-            double Sin = Math.Sin(2 * Math.PI * freq * tCurrent);
-            double Amp = (1 - Cos) / 2 * Sin;
-
-            if(tCurrent < ((double)1 / freq) / dt)
-                P0[Nx / 2, Ny / 2] += Amp;
 
             #endregion
         }
@@ -452,7 +411,7 @@ namespace wavemodel
             */
         }
 
-        public double GettCurrent()
+        public float GettCurrent()
         {
             return tCurrent;
         }

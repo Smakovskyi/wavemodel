@@ -8,10 +8,10 @@ namespace wavemodel
         {
             PDESolver pdeSolver = new PDESolver();
             pdeSolver.SetCoefficients(1000, 1500);
-            pdeSolver.Init(0.0005, 300, 300, 300, 300);
+            pdeSolver.Init(0.0005f, 3000, 3000, 300, 300);
 
-            double graphStep = 0.01;
-            double graphTime = graphStep;
+            float graphStep = 0.01f;
+            float graphTime = graphStep;
 
             while (pdeSolver.GettCurrent() < 0.5)
             {
