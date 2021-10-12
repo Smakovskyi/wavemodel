@@ -11,6 +11,7 @@ namespace wavemodel
         double[,] Vx;
         double[,] Vy;
         double[,] P;
+        double[,] Mur_X1;
 
         double tCurrent;
         double dt;
@@ -126,15 +127,39 @@ namespace wavemodel
             //FillBoundariesV();
             UpdateP();
             //FillBoundariesP();
-            
+            MurBoundaries();   
             tCurrent += dt;
+        }
+
+        public void InitMur1st()
+        {
+            Mur_X1 = new double[4,Ny];
+            for (int j = 0; j < Ny; j++)
+            {
+                Mur_X1[0,j] = 0.0;
+                Mur_X1[1,j] = 0.0;
+                //Mur_X1[2,j] = 0.0;
+                //Mur_X1[3,j] = 0.0;
+            }
         }
 
         private void MurBoundaries()
         {
+            double reflectionCoefficient = 0.2;
 
+            for (int j = 1; j < Ny - 1; j++)
+            {
+                P[0, j] = reflectionCoefficient * P[0,j] +
+                          (1 - reflectionCoefficient )* (Mur_X1[1, j] + (velocity * dt - dx)
+                                         / (velocity * dt + dx) * (P[1, j] - Mur_X1[0, j]));
+            }
+
+            for (int j = 0; j < Ny; j++)
+            {
+                Mur_X1[0, j] = P[0, j];
+                Mur_X1[1, j] = P[1, j];
+            }
         }
-
         public void FillBoundariesV()
         {
             for (int j = 0; j < Ny; j++)
@@ -158,6 +183,7 @@ namespace wavemodel
         }
         private void FillBoundaries()
         {
+
             //for(int i = 0; i <= Nx; i++)
             //{
             //     double x = dx * i;

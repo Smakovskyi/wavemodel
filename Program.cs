@@ -9,6 +9,7 @@ namespace wavemodel
             PDESolver pdeSolver = new PDESolver();
             pdeSolver.Init(0.0003, 300, 300, 300, 300);
             pdeSolver.SetCoefficients(1000, 1500);
+            pdeSolver.InitMur1st();
             double graphStep = 0.01;
             double graphTime = graphStep;
 
