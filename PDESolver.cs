@@ -28,8 +28,8 @@ namespace wavemodel
         int Nx;
         int Ny;
 
-        double dt_dx_ro = 0;
-        double dt_dy_ro = 0;
+        double dt_dx_0ro = 0;
+        double dt_dy_0ro = 0;
 
         double dt_dx_vro = 0;
         double dt_dy_vro = 0;
@@ -103,11 +103,11 @@ namespace wavemodel
                     P0[i, j] = 0;
 
 
-            dt_dx_ro = (dt / dx) * ro;
-            dt_dy_ro = (dt / dy) * ro;
+            dt_dx_0ro = (dt / dx) / ro;
+            dt_dy_0ro = (dt / dy) / ro;
 
-            dt_dx_vro = dt_dx_ro * velocity * velocity;
-            dt_dy_vro = dt_dy_ro * velocity * velocity;
+            dt_dx_vro = (dt / dx) * ro * velocity * velocity;
+            dt_dy_vro = (dt / dy) * ro * velocity * velocity;
 
             #endregion
 
@@ -384,11 +384,11 @@ namespace wavemodel
         {
             for(int i = 1; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    Vx[i, j] += -dt_dx_ro * (P0[i, j] - P0[i - 1, j]);
+                    Vx[i, j] += -dt_dx_0ro * (P0[i, j] - P0[i - 1, j]);
 
             for(int i = 0; i < Nx; i++)
                 for(int j = 1; j < Ny; j++)
-                    Vy[i, j] += -dt_dy_ro * (P0[i, j] - P0[i, j - 1]);
+                    Vy[i, j] += -dt_dy_0ro * (P0[i, j] - P0[i, j - 1]);
         }
         private void UpdateP()
         {
