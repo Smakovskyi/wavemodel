@@ -8,7 +8,7 @@ namespace wavemodel
         {
             PDESolver pdeSolver = new PDESolver();
             pdeSolver.SetCoefficients(1000, 1500);
-            pdeSolver.Init(0.001, 10, 10, 500, 500);
+            pdeSolver.Init(0.0005, 300, 300, 300, 300);
 
             double graphStep = 0.01;
             double graphTime = graphStep;
@@ -23,6 +23,7 @@ namespace wavemodel
                     pdeSolver.SaveCurrentValuesP0("outFixedP0" + Math.Round(graphTime, 2) + ".kr");
                     pdeSolver.SaveCurrentValuesVx("outFixedVx" + Math.Round(graphTime, 2) + ".kr");
                     pdeSolver.SaveCurrentValuesVy("outFixedVy" + Math.Round(graphTime, 2) + ".kr");
+
                     graphTime += graphStep;
                 }
             }

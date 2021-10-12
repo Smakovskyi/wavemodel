@@ -18,6 +18,7 @@ namespace wavemodel
         double[,] Mur_Y1;   // Mur's 2nd-Order Absorption Layer
         double[,] Mur_Y2;   // Mur's 2nd-Order Absorption Layer
 
+        double nCurrent;
         double tCurrent;
         double dt;
         double dx;
@@ -28,8 +29,8 @@ namespace wavemodel
         int Nx;
         int Ny;
 
-        double dt_dx_ro = 0;
-        double dt_dy_ro = 0;
+        double dt_dx_0ro = 0;
+        double dt_dy_0ro = 0;
 
         double dt_dx_vro = 0;
         double dt_dy_vro = 0;
@@ -73,12 +74,12 @@ namespace wavemodel
 
         public void Init(double dt, double lX, double lY, int Nx, int Ny)
         {
-            this.Nx = (int)((double)Nx / lX);
-            this.Ny = (int)((double)Ny / lY);
+            this.Nx = Nx;
+            this.Ny = Ny;
             this.dt = dt;
 
-            this.dx = lX;
-            this.dy = lY;
+            this.dx = lX / Nx;
+            this.dy = lY / Ny;
 
             InitGrid();
         }
@@ -86,9 +87,9 @@ namespace wavemodel
         {
             #region init P0, Vx, Vy
 
-            P0 = new double[Nx + 1, Ny + 1];
-            Vx = new double[Nx + 1, Ny + 1];
-            Vy = new double[Nx + 1, Ny + 1];
+            P0 = new double[Nx, Ny];
+            Vx = new double[Nx + 1, Ny];
+            Vy = new double[Nx, Ny + 1];
 
             for (int i = 0; i <= Nx; i++)
                 for (int j = 0; j < Ny; j++)
@@ -103,11 +104,11 @@ namespace wavemodel
                     P0[i, j] = 0;
 
 
-            dt_dx_ro = (dt / dx) * ro;
-            dt_dy_ro = (dt / dy) * ro;
+            dt_dx_0ro = (dt / dx) / ro;
+            dt_dy_0ro = (dt / dy) / ro;
 
-            dt_dx_vro = dt_dx_ro * velocity * velocity;
-            dt_dy_vro = dt_dy_ro * velocity * velocity;
+            dt_dx_vro = (dt / dx) * ro * velocity * velocity;
+            dt_dy_vro = (dt / dy) * ro * velocity * velocity;
 
             #endregion
 
@@ -178,25 +179,44 @@ namespace wavemodel
 
         private void FillBoundaries_null()
         {
-            for(int j = 0; j <= Nx; j++)
+            #region Boundaries
+
+            for(int j = 0; j < Ny; j++)
             {
-                P0[0, j] = 0;
-                P0[Nx, j] = 0;
-                Vx[0, j] = 0;
-                Vx[Nx, j] = 0;
-                Vy[0, j] = 0;
-                Vy[Nx, j] = 0;
+                //P0[0, j] = 0;
+                //P0[Nx, j] = 0;
+                //Vx[0, j] = 0;
+                //Vx[Nx, j] = 0;
+                //Vy[0, j] = 0;
+                //Vy[Nx, j] = 0;
             }
 
-            for(int i = 0; i <= Ny; i++)
+            for(int i = 0; i < Nx; i++)
             {
-                P0[i, 0] = 0;
-                P0[i, Ny] = 0;
-                Vx[i, 0] = 0;
-                Vx[i, Ny] = 0;
-                Vy[i, 0] = 0;
-                Vy[i, Ny] = 0;
+                //P0[i, 0] = 0;
+                //P0[i, Ny] = 0;
+                //Vx[i, 0] = 0;
+                //Vx[i, Ny] = 0;
+                //Vy[i, 0] = 0;
+                //Vy[i, Ny] = 0;
             }
+
+            #endregion
+
+            #region source
+
+            double freq = 1000;
+
+            double Cos = Math.Cos(2 * Math.PI * freq * nCurrent * dt);
+            double Sin = Math.Sin(2 * Math.PI * freq * nCurrent * dt);
+            double Amp = (1 - Cos) / 2 * Sin;
+
+            /*
+            if(nCurrent++ < ((double)1 / freq) / dt)
+                P0[Nx / 2, Ny / 2] = Amp;
+            */
+
+            #endregion
         }
 
         private void FillBoundaries_2ndOrder()
@@ -384,19 +404,19 @@ namespace wavemodel
         {
             for(int i = 1; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    Vx[i, j] += -dt_dx_ro * (P0[i, j] - P0[i - 1, j]);
+                    Vx[i, j] -= dt_dx_0ro * (P0[i, j] - P0[i - 1, j]);
 
             for(int i = 0; i < Nx; i++)
                 for(int j = 1; j < Ny; j++)
-                    Vy[i, j] += -dt_dy_ro * (P0[i, j] - P0[i, j - 1]);
+                    Vy[i, j] -= dt_dy_0ro * (P0[i, j] - P0[i, j - 1]);
         }
         private void UpdateP()
         {
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    P0[i, j] +=
-                        -dt_dx_vro * (Vx[i + 1, j] - Vx[i, j]) +
-                        -dt_dy_vro * (Vy[i, j + 1] - Vy[i, j]) - dt * this.F(i, j, tCurrent);
+                    P0[i, j] -=
+                        dt_dx_vro * (Vx[i + 1, j] - Vx[i, j]) +
+                        dt_dy_vro * (Vy[i, j + 1] - Vy[i, j]) - dt * this.F(i, j, tCurrent);
         }
 
 
