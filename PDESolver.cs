@@ -75,17 +75,29 @@ namespace wavemodel
         }
         void InitGrid()
         {
-            Vx = new double[Nx + 1, Ny + 1];
-            Vy = new double[Nx + 1, Ny + 1];
-            P = new double[Nx + 1, Ny + 1];
+            Vx = new double[Nx + 1, Ny];
+            Vy = new double[Nx, Ny + 1];
+            P = new double[Nx , Ny];
 
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                   P[i, j] = 0;
+                }
+            }
             for (int i = 0; i <= Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    Vx[i, j] = 0;
+                }
+            }
+            for (int i = 0; i < Nx; i++)
             {
                 for (int j = 0; j <= Ny; j++)
                 {
-                    Vx[i, j] = 0;
                     Vy[i, j] = 0;
-                    P[i, j] = 0;
                 }
             }
             tCurrent = 0;
@@ -111,11 +123,33 @@ namespace wavemodel
         {
             
             UpdateV();
-            FillBoundaries();
+            FillBoundariesV();
             UpdateP();
-            FillBoundaries();
+            //FillBoundariesP();
 
             tCurrent += dt;
+        }
+
+        public void FillBoundariesV()
+        {
+            for (int j = 0; j < Ny; j++)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    Vx[i, j] *= Math.Exp(-(10-i));
+                    Vy[i, j] *= Math.Exp(-(10-i));
+                    P[i, j] *= Math.Exp(-(10 - i));
+                }
+            }
+        }
+
+
+        public void FillBoundariesP()
+        {
+            for(int j=0; j <= Ny; j++)
+            {
+                P[0, j] = P[1, j];
+            }            
         }
         private void FillBoundaries()
         {
@@ -150,7 +184,7 @@ namespace wavemodel
             //    P[0, j] = MuX(y, tCurrent);
             //    P[Nx, j] = NuX(y, tCurrent);
             //}
-            for (int j = 0; j <= Ny; j++)
+           /* for (int j = 0; j <= Ny; j++)
             {
                 P[0, j] = 0;
                 P[1, j] = 0;
@@ -158,7 +192,7 @@ namespace wavemodel
                 Vx[1, j] = 0;
                 Vy[0, j] = 0;
                 Vy[1, j] = 0;
-            }
+            }*/
 
         }
 
@@ -212,8 +246,8 @@ namespace wavemodel
         {
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
-            for(int i = 0; i <= Nx; i += 1)
-                for(int j = 0; j <= Ny; j += 1)
+            for(int i = 0; i < Nx; i ++)
+                for(int j = 0; j < Ny; j ++)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + P[i, j]).Replace(',', '.'));
         }
         public void SaveCurrentValuesVx(String fileName)
@@ -221,14 +255,14 @@ namespace wavemodel
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
             for (int i = 0; i <= Nx; i += 1)
-                for (int j = 0; j <= Ny; j += 1)
+                for (int j = 0; j < Ny; j += 1)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + Vx[i, j]).Replace(',', '.'));
         }
         public void SaveCurrentValuesVy(String fileName)
         {
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
-            for (int i = 0; i <= Nx; i += 1)
+            for (int i = 0; i < Nx; i += 1)
                 for (int j = 0; j <= Ny; j += 1)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + Vy[i, j]).Replace(',', '.'));
         }
