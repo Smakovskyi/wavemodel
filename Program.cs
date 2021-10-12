@@ -21,8 +21,8 @@ namespace wavemodel
                 if (pdeSolver.GettCurrent() > graphTime)
                 {
                     pdeSolver.SaveCurrentValuesP0("outFixedP0" + Math.Round(graphTime, 2) + ".kr");
-                    pdeSolver.SaveCurrentValuesVx("outFixedVx" + Math.Round(graphTime, 2) + ".kr");
-                    pdeSolver.SaveCurrentValuesVy("outFixedVy" + Math.Round(graphTime, 2) + ".kr");
+                    // pdeSolver.SaveCurrentValuesVx("outFixedVx" + Math.Round(graphTime, 2) + ".kr");
+                    // pdeSolver.SaveCurrentValuesVy("outFixedVy" + Math.Round(graphTime, 2) + ".kr");
 
                     graphTime += graphStep;
                 }
