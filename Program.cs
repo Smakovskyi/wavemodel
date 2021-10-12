@@ -7,7 +7,8 @@ namespace wavemodel
         static void Main(/*string[] args*/)
         {
             PDESolver pdeSolver = new PDESolver();
-            pdeSolver.Init(0.0003, 300, 300, 300, 300);
+            pdeSolver.Init(0.0001, 300, 300, 300, 300);
+
             pdeSolver.SetCoefficients(1000, 1500);
             double graphStep = 0.01;
             double graphTime = graphStep;
@@ -19,9 +20,9 @@ namespace wavemodel
 
                 if (pdeSolver.GettCurrent() > graphTime)
                 {
-                    pdeSolver.SaveCurrentValuesP("outFixedP" +  Math.Round(graphTime, 2) + ".kr");
-                    pdeSolver.SaveCurrentValuesVx("outFixedVx" + Math.Round(graphTime, 2) + ".kr");
-                    pdeSolver.SaveCurrentValuesVy("outFixedVy" + Math.Round(graphTime, 2) + ".kr");
+                    pdeSolver.SaveCurrentValuesP("outFixedP0" +  Math.Round(graphTime, 2) + ".kr");
+                    // pdeSolver.SaveCurrentValuesVx("outFixedVx" + Math.Round(graphTime, 2) + ".kr");
+                    // pdeSolver.SaveCurrentValuesVy("outFixedVy" + Math.Round(graphTime, 2) + ".kr");
                     graphTime += graphStep;
                 }
             }
