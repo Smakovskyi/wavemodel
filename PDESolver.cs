@@ -8,50 +8,26 @@ namespace wavemodel
     {
         #region var
 
-        double[,] Vx;
-        double[,] Vy;
-        double[,] P;
-        double[,] Mur_X1;
+        double[,,] Vx;
+        double[,,] Vy;
+        double[,,] Vz;
+        double[,,] P;
+        double[,,] Mur_X1;
 
         double tCurrent;
         double dt;
         double dx;
         double dy;
+        double dz;
         double ro;
         double velocity;
-        // double lX;
-        // double lY;
-        int Nx;
-        int Ny;
+        
+        int Nx, Ny, Nz;
 
         #endregion
 
         #region unused 1
 
-        //x = 0 border
-        static double MuX(double y, double t)
-        {
-            return 0.0;
-        }
-        //x = x_max border
-        public double NuX(double y, double t)
-        {
-            return 0.0;
-        }
-        //y = 0
-        public double MuY(double x, double t)
-        {
-            return 0.0;
-        }
-        //y = y_max
-        public double NuY(double x, double t)
-        {
-            return 0.0;
-        }
-        public double Fi(double x, double y)
-        {
-            return 0.0;
-        }
         public double Psi(double x, double y)
         {
             return 0.0;
@@ -61,52 +37,76 @@ namespace wavemodel
 
         #region init
 
-        public void Init(double dt, double lX, double lY, int Nx, int Ny)
+        public void Init(double dt, double lX, double lY, double lZ, int Nx, int Ny, int Nz)
         {
             this.Nx = Nx;
             this.Ny = Ny;
+            this.Nz = Nz;
             this.dt = dt;
 
-            // this.lX = lX;
             this.dx = lX / Nx;
-            // this.lY = lY;
             this.dy = lY / Ny;
+            this.dz = lZ / Nz;
 
             InitGrid();
         }
         void InitGrid()
         {
-            Vx = new double[Nx + 1, Ny];
-            Vy = new double[Nx, Ny + 1];
-            P = new double[Nx, Ny];
+            Vx = new double[Nx + 1, Ny, Nz];
+            Vy = new double[Nx, Ny + 1, Nz];
+            Vz = new double[Nx, Ny, Nz + 1];
+            P = new double[Nx, Ny, Nz];
 
             for (int i = 0; i < Nx; i++)
             {
                 for (int j = 0; j < Ny; j++)
                 {
-                    P[i, j] = 0;
+                    for(int k = 0; k < Nz; k++)
+                    {
+                        P[i, j, k] = 0;
+                    }
+                    
                 }
             }
             for (int i = 0; i <= Nx; i++)
             {
                 for (int j = 0; j < Ny; j++)
                 {
-                    Vx[i, j] = 0;
+                    for (int k = 0; k < Nz; k++)
+                    {
+                        Vx[i, j, k] = 0;
+                    }
                 }
             }
             for (int i = 0; i < Nx; i++)
             {
                 for (int j = 0; j <= Ny; j++)
                 {
-                    Vy[i, j] = 0;
+                    for (int k = 0; k < Nz; k++)
+                    {
+                        Vy[i, j, k] = 0;
+                    }
+                }
+            }
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    for (int k = 0; k <= Nz; k++)
+                    {
+                        Vz[i, j, k] = 0;
+                    }
                 }
             }
             tCurrent = 0;
         }
 
-        double F(int i, int j, double t)
+        double F(int i, int j, int  k, double t)
         {
-            if ((Math.Abs(i - Nx / 2) <= 2) && (Math.Abs(j - Ny / 2) <= 2) && t < 0.2)
+            if ( (Math.Abs(i - Nx / 2) <= 2) 
+                 && (Math.Abs(j - Ny / 2) <= 2)
+                 && (Math.Abs(k - Nz / 2) <= 2) 
+                 && t < 0.2)
             {
                 return Math.Cos(Math.PI * 2 * t);
             }
@@ -133,13 +133,16 @@ namespace wavemodel
 
         public void InitMur1st()
         {
-            Mur_X1 = new double[4,Ny];
-            for (int j = 0; j < Ny; j++)
+            Mur_X1 = new double[4 ,Ny ,Nz];
+            for (int j = 0; j < Ny; j++) 
             {
-                Mur_X1[0,j] = 0.0;
-                Mur_X1[1,j] = 0.0;
-                //Mur_X1[2,j] = 0.0;
-                //Mur_X1[3,j] = 0.0;
+                for (int k = 0; j < Nz; j++)
+                {
+                    Mur_X1[0, j, k] = 0.0;
+                    Mur_X1[1, j, k] = 0.0;
+                    //Mur_X1[2,j] = 0.0;
+                    //Mur_X1[3,j] = 0.0;
+                }
             }
         }
 
@@ -147,86 +150,27 @@ namespace wavemodel
         {
             double reflectionCoefficient = 0.2;
 
-            for (int j = 1; j < Ny - 1; j++)
-            {
-                P[0, j] = reflectionCoefficient * P[0,j] +
-                          (1 - reflectionCoefficient )* (Mur_X1[1, j] + (velocity * dt - dx)
-                                         / (velocity * dt + dx) * (P[1, j] - Mur_X1[0, j]));
+            for (int j = 1; j < Ny - 1; j++) 
+            { 
+                for (int k = 0; k < Nz; k++) 
+                {
+
+                        P[0, j, k] = reflectionCoefficient * P[0, j, k] +
+                                  (1 - reflectionCoefficient) * (Mur_X1[1, j, k] + (velocity * dt - dx)
+                                                 / (velocity * dt + dx) * (P[1, j, k] - Mur_X1[0, j, k]));
+                }
             }
 
             for (int j = 0; j < Ny; j++)
             {
-                Mur_X1[0, j] = P[0, j];
-                Mur_X1[1, j] = P[1, j];
-            }
-        }
-        public void FillBoundariesV()
-        {
-            for (int j = 0; j < Ny; j++)
-            {
-                for (int i = 0; i < 10; i++)
+                for (int k = 0; k < Nz; k++) 
                 {
-                    Vx[i, j] *= Math.Exp(-(10-i));
-                    Vy[i, j] *= Math.Exp(-(10-i));
-                    P[i, j] *= Math.Exp(-(10 - i));
+                    Mur_X1[0, j, k] = P[0, j, k];
+                    Mur_X1[1, j, k] = P[1, j, k];
                 }
             }
         }
-
-
-        public void FillBoundariesP()
-        {
-            for(int j=0; j <= Ny; j++)
-            {
-                P[0, j] = P[1, j];
-            }            
-        }
-        private void FillBoundaries()
-        {
-
-            //for(int i = 0; i <= Nx; i++)
-            //{
-            //     double x = dx * i;
-
-            //    Vx[i, 0] = MuY(x, tCurrent);
-            //    Vy[i, 0] = MuY(x, tCurrent);
-            //    P[i, 0] = MuY(x, tCurrent);
-            //    P[i, 1] = MuY(x, tCurrent);
-            //    Vx[i, 1] = MuY(x, tCurrent);
-            //    Vy[i, 1] = MuY(x, tCurrent);
-
-            //    //Vx[i, Ny] = NuY(x, tCurrent);
-            //    //Vy[i, Ny] = NuY(x, tCurrent);
-            //    Vx[i, Ny] = 0;
-            //    Vy[i, Ny] = 0;
-            //    P[i, Ny] = P[i, Ny-1];
-            //}
-
-            //for (int j = 0; j <= Ny; j++)
-            //{
-            //     double y = dy * j;
-
-            //    Vx[0, j] = MuX(y, tCurrent);
-            //    Vx[Nx, j] = NuX(y, tCurrent);
-
-            //    Vy[0, j] = MuX(y, tCurrent);
-            //    Vy[Nx, j] = NuX(y, tCurrent);
-
-            //    P[0, j] = MuX(y, tCurrent);
-            //    P[Nx, j] = NuX(y, tCurrent);
-            //}
-           /* for (int j = 0; j <= Ny; j++)
-            {
-                P[0, j] = 0;
-                P[1, j] = 0;
-                Vx[0, j] = 0;
-                Vx[1, j] = 0;
-                Vy[0, j] = 0;
-                Vy[1, j] = 0;
-            }*/
-
-        }
-
+        
         //
 
         private void UpdateV()
@@ -236,39 +180,59 @@ namespace wavemodel
 
             double dt_dx_ro = dt / (dx * ro);
             double dt_dy_ro = dt / (dy * ro);
+            double dt_dz_ro = dt / (dz * ro);
 
             for (int i = 1; i < Nx; i++)
             {
                 for (int j = 0; j < Ny; j++)
                 {
-                    Vx[i, j] -= dt_dx_ro * (P[i, j] - P[i - 1, j]);
+                    for (int k = 0; k < Nz; k++)
+                    {
+                        Vx[i, j, k] -= dt_dx_ro * (P[i, j, k] - P[i - 1, j , k]);
+                    }
                 }
             }
             for (int i = 0; i < Nx; i++)
             {
                 for (int j = 1; j < Ny; j++)
                 {
-                    Vy[i, j] -= dt_dy_ro * (P[i, j] - P[i, j - 1]);
+                    for (int k = 0; k < Nz; k++)
+                    {
+                        Vy[i, j, k] -= dt_dy_ro * (P[i, j, k] - P[i, j - 1, k]);
+                    }
+                }
+            }
+
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    for (int k = 1; k < Nz; k++)
+                    {
+                        Vz[i, j, k] -= dt_dz_ro * (P[i, j, k] - P[i , j, k - 1]);
+                    }
                 }
             }
         }
 
         private void UpdateP()
         {
-            //double dt_ro_c2x = dt * ro * velocity * 10 / dx; /*velocity*/
-            //double dt_ro_c2y = dt * ro * velocity * 10 / dy; /*velocity*/
+            
 
             double dt_dx_ro = (dt / dx) * ro * velocity * velocity;
             double dt_dy_ro = (dt / dy) * ro * velocity * velocity;
+            double dt_dz_ro = dt / (dz * ro);
 
-            for(int i = 0; i < Nx; i++)
+            for (int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                {
-                    P[i, j] -=
-                        dt_dx_ro * (Vx[i + 1, j] - Vx[i, j]) +
-                        dt_dy_ro * (Vy[i, j + 1] - Vy[i, j]) -
-                        dt * this.F(i, j, tCurrent);
-                }
+                    for (int k = 0; k < Nz; k++)
+                    {
+                        P[i, j, k] -=
+                        dt_dx_ro * (Vx[i + 1, j, k] - Vx[i, j, k]) +
+                        dt_dy_ro * (Vy[i, j + 1, k] - Vy[i, j, k]) +
+                        dt_dz_ro * (Vz[i, j , k + 1] - Vz[i, j, k])
+                        - dt * this.F(i, j, k, tCurrent);
+                    }
         }
 
         #region save
@@ -279,8 +243,9 @@ namespace wavemodel
 
             for(int i = 0; i < Nx; i ++)
                 for(int j = 0; j < Ny; j ++)
-                    outWriter.WriteLine((dx * i + " " + dy * j + " " + P[i, j]).Replace(',', '.'));
+                    outWriter.WriteLine((dx * i + " " + dy * j + " " + P[i, j , Nz / 2]).Replace(',', '.'));
         }
+        /*
         public void SaveCurrentValuesVx(String fileName)
         {
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
@@ -296,7 +261,7 @@ namespace wavemodel
             for (int i = 0; i < Nx; i += 1)
                 for (int j = 0; j <= Ny; j += 1)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + Vy[i, j]).Replace(',', '.'));
-        }
+        }*/
         public double GettCurrent()
         {
             return tCurrent;
