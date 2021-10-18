@@ -12,7 +12,9 @@ namespace wavemodel
         double[,,] Vy;
         double[,,] Vz;
         double[,,] P;
-        double[,,] Mur_X1;
+        double[,,] MurX;
+        double[,,] MurY;
+        double[,,] MurZ;
 
         double tCurrent;
         double dt;
@@ -21,7 +23,9 @@ namespace wavemodel
         double dz;
         double ro;
         double velocity;
-        
+
+        StreamWriter datWriter;
+
         int Nx, Ny, Nz;
 
         #endregion
@@ -47,6 +51,8 @@ namespace wavemodel
             this.dx = lX / Nx;
             this.dy = lY / Ny;
             this.dz = lZ / Nz;
+
+            datWriter = new StreamWriter("P_all.csv", false, System.Text.Encoding.Default);
 
             InitGrid();
         }
@@ -101,6 +107,22 @@ namespace wavemodel
             tCurrent = 0;
         }
 
+
+        public void Close()
+        {
+            datWriter.Close();
+        }
+
+
+        public void SaveToCSV()
+        {
+            datWriter.WriteLine( ("" + P[Nx/2, Ny/2, Nz-4]+";").Replace(',', '.'));
+        }
+
+        public void FlushCSV()
+        {
+            datWriter.Flush();
+        }
         double F(int i, int j, int  k, double t)
         {
             if ( (Math.Abs(i - Nx / 2) <= 2) 
@@ -133,15 +155,37 @@ namespace wavemodel
 
         public void InitMur1st()
         {
-            Mur_X1 = new double[4 ,Ny ,Nz];
+            MurX = new double[4 ,Ny ,Nz];
             for (int j = 0; j < Ny; j++) 
             {
                 for (int k = 0; j < Nz; j++)
                 {
-                    Mur_X1[0, j, k] = 0.0;
-                    Mur_X1[1, j, k] = 0.0;
-                    //Mur_X1[2,j] = 0.0;
-                    //Mur_X1[3,j] = 0.0;
+                    MurX[0, j, k] = 0.0;
+                    MurX[1, j, k] = 0.0;
+                    MurX[2, j, k] = 0.0;
+                    MurX[3, j, k] = 0.0;
+                }
+            }
+            MurY = new double[Nx, 4, Nz];
+            for(int i=0; i<Nx; i++)
+            {
+                for(int k=0; k<Nz; k++)
+                {
+                    MurY[i, 0,  k] = 0.0;
+                    MurY[i, 1,  k] = 0.0;
+                    MurY[i, 2,  k] = 0.0;
+                    MurY[i, 3,  k] = 0.0;
+                }
+            }
+            MurZ = new double[Nx, Ny, 4];
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    MurZ[i, j, 0] = 0.0;
+                    MurZ[i, j, 1] = 0.0;
+                    MurZ[i, j, 2] = 0.0;
+                    MurZ[i, j, 3] = 0.0;
                 }
             }
         }
@@ -149,30 +193,97 @@ namespace wavemodel
         private void MurBoundaries()
         {
             double reflectionCoefficient = 0.2;
-
-            for (int j = 1; j < Ny - 1; j++) 
-            { 
-                for (int k = 0; k < Nz; k++) 
+            // x==0 boundary, partial reflection 
+            for (int j = 1; j < Ny - 1; j++)
+            {
+                for (int k = 0; k < Nz; k++)
                 {
+                    P[0, j, k] = reflectionCoefficient * P[0, j, k] +
+                              (1 - reflectionCoefficient) * (MurX[1, j, k] + (velocity * dt - dx)
+                                             / (velocity * dt + dx) * (P[1, j, k] - MurX[0, j, k]));
+                }
+            }
+            // x == Lx, Mur absorbing
+            for (int j = 1; j < Ny - 1; j++)
+            {
+                for (int k = 0; k < Nz; k++)
+                {
+                    P[Nx - 1, j, k] = MurX[2, j, k] + (velocity * dt - dx) / (velocity * dt + dx) * (P[Nx - 2, j, k] - MurX[3, j, k]);
+                }
+            }
+            // y == 0
+            for (int i = 1; i < Nx - 1; i++)
+            {
+                for (int k = 0; k < Nz; k++)                     // 
+                {                                                // dx - maybe dy ?????             
+                    P[i, 0, k] = MurY[i, 1, k] + (velocity * dt - dx) / (velocity * dt + dx) * (P[i, 1, k] - MurY[i, 0, k]);
+                }
+            }
+            // y == Ly
+            for (int i = 1; i < Nx - 1; i++)
+            {
+                for (int k = 0; k < Nz; k++)
+                {                                               //dx
+                    P[i, Ny - 1, k] = MurY[i, 2, k] + (velocity * dt - dx) / (velocity * dt + dx) * (P[i, Ny - 2, k] - MurY[i, 3, k]);
+                }
+            }
+            // z == 0
+            for (int i = 1; i < Nx - 1; i++)
+            {
+                for (int j = 1; j < Ny - 1; j++)
+                {                                                 //dx
+                    P[i, j, 0] = MurZ[i, j, 1] + (velocity * dt - dx) / (velocity * dt + dx) * (P[i, j, 1] - MurZ[i, j, 0]);
+                }
 
-                        P[0, j, k] = reflectionCoefficient * P[0, j, k] +
-                                  (1 - reflectionCoefficient) * (Mur_X1[1, j, k] + (velocity * dt - dx)
-                                                 / (velocity * dt + dx) * (P[1, j, k] - Mur_X1[0, j, k]));
+            }
+            // z == Lz
+            for (int i = 1; i < Nx - 1; i++)
+            {
+                for (int j = 1; j < Ny - 1; j++)
+                {                                                    ///????       dx
+                    P[i, j, Nz - 1] = MurZ[i, j, 2] + (velocity * dt - dx) / (velocity * dt + dx) * (P[i, j ,Nz - 2] - MurZ[i, j, 3]);
+                }
+
+            }
+            //
+            MurCopy();
+        }
+
+
+        private void MurCopy()
+        {
+            for (int j = 0; j < Ny; j++)
+            {
+                for (int k = 0; k < Nz; k++)
+                {
+                    MurX[0, j, k] = P[0, j, k];
+                    MurX[1, j, k] = P[1, j, k];
+                    MurX[2, j, k] = P[Nx - 2, j, k];
+                    MurX[3, j, k] = P[Nx - 1, j, k];
                 }
             }
 
-            for (int j = 0; j < Ny; j++)
+            for (int i = 0; i < Nx; i++)
             {
-                for (int k = 0; k < Nz; k++) 
+                for (int k = 0; k < Nz; k++)
                 {
-                    Mur_X1[0, j, k] = P[0, j, k];
-                    Mur_X1[1, j, k] = P[1, j, k];
+                    MurY[i,0,k] = P[i, 0, k];
+                    MurY[i,1,k] = P[i, 1, k];
+                    MurY[i,2,k] = P[i, Ny - 2, k];
+                    MurY[i,3,k] = P[i, Ny - 1, k];
+                }
+            }
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j< Ny; j++)
+                {
+                    MurZ[i, j, 0] = P[i, j, 0];
+                    MurZ[i, j, 1] = P[i, j, 1];
+                    MurZ[i, j, 2] = P[i, j, Nz - 2];
+                    MurZ[i, j, 3] = P[i, j, Nz - 1];
                 }
             }
         }
-        
-        //
-
         private void UpdateV()
         {
             // dt_over_dx = (dt / dy) / ro;
@@ -221,7 +332,7 @@ namespace wavemodel
 
             double dt_dx_ro = (dt / dx) * ro * velocity * velocity;
             double dt_dy_ro = (dt / dy) * ro * velocity * velocity;
-            double dt_dz_ro = dt / (dz * ro);
+            double dt_dz_ro = (dt / dz) * ro * velocity * velocity;
 
             for (int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
