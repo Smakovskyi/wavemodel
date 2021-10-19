@@ -7,7 +7,7 @@ namespace wavemodel
         static void Main(/*string[] args*/)
         {
             PDESolver pdeSolver = new PDESolver();
-            pdeSolver.Init(0.0003, 300.0 , 300.0 ,300.0, 30, 30, 30);
+            pdeSolver.Init(0.0003, 300.0 , 300.0 ,300.0, 60, 60, 60);
 
             pdeSolver.SetCoefficients(1000, 1500);
             pdeSolver.InitMur1st();

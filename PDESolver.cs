@@ -192,7 +192,7 @@ namespace wavemodel
 
         private void MurBoundaries()
         {
-            double reflectionCoefficient = 0.2;
+            double reflectionCoefficient = 0.5;
             // x==0 boundary, partial reflection 
             for (int j = 1; j < Ny - 1; j++)
             {
