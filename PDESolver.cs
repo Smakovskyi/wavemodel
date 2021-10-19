@@ -11,103 +11,51 @@ namespace wavemodel
         StreamWriter datWriter;
 
         float[,,] P0;
-        float[,,] Vx; int dx; int Nx;
-        float[,,] Vy; int dy; int Ny;
-        float[,,] Vz; int dz; int Nz;
+        float[,,] Vx; int Nx;
+        float[,,] Vy; int Ny;
+        float[,,] Vz; int Nz;
 
         float[,,] MurX;
         float[,,] MurY;
         float[,,] MurZ;
-        float [,,] velocityMur;
+        float[,,] velocityMur;
 
-        float tCurrent;
         float dt;
+        float tCurrent;
 
         float dt_dx_ro;
-        float dt_dy_ro;
-        float dt_dz_ro;
-        float [,,] dt_dy_vvro;
-        float [,,] dt_dz_vvro;
         float [,,] dt_dx_vvro;
-
-        #endregion
-
-        #region unused
-
-        /*
-        //x = 0 border
-        static long MuX(int x, float t)
-        {
-            return 0;
-        }
-        //x = x_max border
-        public long NuX(int x, float t)
-        {
-            return 0;
-        }
-        //y = 0
-        public long MuY(int y, float t)
-        {
-            return 0;
-        }
-        //y = y_max
-        public long NuY(int y, float t)
-        {
-            return 0;
-        }
-
-        public long Fi(int x, int y)
-        {
-            return 0;
-        }
-        public double Psi(double x, double y)
-        {
-            return 0.0;
-        }
-        */
 
         #endregion
 
         #region init
 
-        public void Init(float dt, int lX, int lY, int lZ, int Nx, int Ny, int Nz)
+        public void Init(float dt, int Nx, int Ny, int Nz)
         {
+            this.dt = dt;
+
             this.Nx = Nx;
             this.Ny = Ny;
             this.Nz = Nz;
-            this.dt = dt;
-
-            this.dx = lX / Nx;
-            this.dy = lY / Ny;
-            this.dz = lZ / Nz;
 
             datWriter = new StreamWriter("P_all.csv", false, System.Text.Encoding.Default);
 
             InitGrid();
         }
-        public void SetCoefficients(int ro, float[,,] velocity)
+        public void SetCoefficients(float ro, float[,,] velocity)
         {
             velocityMur = new float[Nx, Ny, Nz];
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
                     for(int k = 0; k < Nz; k++)
-                        velocityMur[i, j, k] = (velocity[i, j, k] * dt - dz) / (velocity[i, j, k] * dt + dz);
+                        velocityMur[i, j, k] = (velocity[i, j, k] * dt - 10) / (velocity[i, j, k] * dt + 10);
 
-            dt_dx_ro = dt / (dx * ro);
-            dt_dy_ro = dt / (dy * ro);
-            dt_dz_ro = dt / (dz * ro);
-
+            dt_dx_ro = dt / (10 * ro);
             dt_dx_vvro = new float[Nx, Ny, Nz];
-            dt_dy_vvro = new float[Nx, Ny, Nz];
-            dt_dz_vvro = new float[Nx, Ny, Nz];
             for(int i = 0; i < Nz; i++)
                 for(int j = 0; j < Nz; j++)
                     for(int k = 0; k < Nz; k++)
-                    {
-                        dt_dx_vvro[i, j, k] = (dt / dx) * velocity[i, j, k] * velocity[i, j, k] * ro;
-                        dt_dy_vvro[i, j, k] = (dt / dy) * velocity[i, j, k] * velocity[i, j, k] * ro;
-                        dt_dz_vvro[i, j, k] = (dt / dz) * velocity[i, j, k] * velocity[i, j, k] * ro;
-                    }
+                        dt_dx_vvro[i, j, k] = (dt / 10) * velocity[i, j, k] * velocity[i, j, k] * ro;
         }
 
         void InitGrid()
@@ -179,7 +127,7 @@ namespace wavemodel
 
         //
 
-        float F(int i, int j, int  k, double t)
+        float F(int i, int j, int  k, float t)
         {
             if( (Math.Abs(i - Nx / 2) <= 2) &&
                 (Math.Abs(j - Ny / 2) <= 2) &&
@@ -318,12 +266,12 @@ namespace wavemodel
             for (int i = 0; i < Nx; i++)
                 for (int j = 1; j < Ny; j++)
                     for (int k = 0; k < Nz; k++)
-                        Vy[i, j, k] -= dt_dy_ro * (P0[i, j, k] - P0[i, j - 1, k]);
+                        Vy[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i, j - 1, k]);
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     for (int k = 1; k < Nz; k++)
-                        Vz[i, j, k] -= dt_dz_ro * (P0[i, j, k] - P0[i , j, k - 1]);
+                        Vz[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i , j, k - 1]);
         }
 
         //
@@ -335,9 +283,12 @@ namespace wavemodel
                     for (int k = 0; k < Nz; k++)
                     {
                         P0[i, j, k] -=
-                        dt_dx_vvro[i, j, k] * (Vx[i + 1, j, k] - Vx[i, j, k]) +
-                        dt_dy_vvro[i, j, k] * (Vy[i, j + 1, k] - Vy[i, j, k]) +
-                        dt_dz_vvro[i, j, k] * (Vz[i, j, k + 1] - Vz[i, j, k]) - dt * this.F(i, j, k, tCurrent);
+                            dt_dx_vvro[i, j, k] *
+                                (
+                                Vx[i + 1, j, k] - Vx[i, j, k] +
+                                Vy[i, j + 1, k] - Vy[i, j, k] +
+                                Vz[i, j, k + 1] - Vz[i, j, k]
+                                ) - dt * this.F(i, j, k, tCurrent);
                     }
         }
 
@@ -366,9 +317,9 @@ namespace wavemodel
 
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    outWriter.WriteLine((dx * i + " " + dy * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
+                    outWriter.WriteLine((10 * i + " " + 10 * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
         }
-        public double GettCurrent()
+        public float GettCurrent()
         {
             return tCurrent;
         }
