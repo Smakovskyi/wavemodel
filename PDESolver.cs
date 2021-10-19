@@ -168,7 +168,23 @@ namespace wavemodel
             datWriter.Flush();
         }
 
-        double F(int i, int j, int k, double t)
+
+        public void Close()
+        {
+            datWriter.Close();
+        }
+
+
+        public void SaveToCSV()
+        {
+            datWriter.WriteLine( ("" + P[Nx/2, Ny/2, Nz-4]+";").Replace(',', '.'));
+        }
+
+        public void FlushCSV()
+        {
+            datWriter.Flush();
+        }
+        double F(int i, int j, int  k, double t)
         {
             if( (Math.Abs(i - Nx / 2) <= 2) &&
                 (Math.Abs(j - Ny / 2) <= 2) &&
@@ -303,6 +319,27 @@ namespace wavemodel
 
         #region Update P, V
 
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int k = 0; k < Nz; k++)
+                {
+                    MurY[i,0,k] = P[i, 0, k];
+                    MurY[i,1,k] = P[i, 1, k];
+                    MurY[i,2,k] = P[i, Ny - 2, k];
+                    MurY[i,3,k] = P[i, Ny - 1, k];
+                }
+            }
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j< Ny; j++)
+                {
+                    MurZ[i, j, 0] = P[i, j, 0];
+                    MurZ[i, j, 1] = P[i, j, 1];
+                    MurZ[i, j, 2] = P[i, j, Nz - 2];
+                    MurZ[i, j, 3] = P[i, j, Nz - 1];
+                }
+            }
+        }
         private void UpdateV()
         {
             double dt_dx_ro = dt / (dx * ro);
