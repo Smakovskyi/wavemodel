@@ -8,32 +8,33 @@ namespace wavemodel
     {
         #region var
 
-        double[,,] Vx;
-        double[,,] Vy;
-        double[,,] Vz;
-        double[,,] P0;
-
-        double[,,] MurX;
-        double[,,] MurY;
-        double[,,] MurZ;
-
-        double tCurrent;
-        double dt;
-        double dx;
-        double dy;
-        double dz;
-        double ro;
-        double velocity;
-
         StreamWriter datWriter;
 
-        int Nx, Ny, Nz;
+        float[,,] P0;
+        float[,,] Vx; int dx; int Nx;
+        float[,,] Vy; int dy; int Ny;
+        float[,,] Vz; int dz; int Nz;
+
+        float[,,] MurX;
+        float[,,] MurY;
+        float[,,] MurZ;
+        float [,,] velocityMur;
+
+        float tCurrent;
+        float dt;
+
+        float dt_dx_ro;
+        float dt_dy_ro;
+        float dt_dz_ro;
+        float [,,] dt_dy_vvro;
+        float [,,] dt_dz_vvro;
+        float [,,] dt_dx_vvro;
 
         #endregion
 
-        #region unused 1
+        #region unused
 
-/*
+        /*
         //x = 0 border
         static long MuX(int x, float t)
         {
@@ -59,17 +60,17 @@ namespace wavemodel
         {
             return 0;
         }
-*/
         public double Psi(double x, double y)
         {
             return 0.0;
         }
+        */
 
         #endregion
 
         #region init
 
-        public void Init(double dt, double lX, double lY, double lZ, int Nx, int Ny, int Nz)
+        public void Init(float dt, int lX, int lY, int lZ, int Nx, int Ny, int Nz)
         {
             this.Nx = Nx;
             this.Ny = Ny;
@@ -84,105 +85,109 @@ namespace wavemodel
 
             InitGrid();
         }
+        public void SetCoefficients(int ro, float[,,] velocity)
+        {
+            velocityMur = new float[Nx, Ny, Nz];
+            for(int i = 0; i < Nx; i++)
+                for(int j = 0; j < Ny; j++)
+                    for(int k = 0; k < Nz; k++)
+                        velocityMur[i, j, k] = (velocity[i, j, k] * dt - dz) / (velocity[i, j, k] * dt + dz);
+
+            dt_dx_ro = dt / (dx * ro);
+            dt_dy_ro = dt / (dy * ro);
+            dt_dz_ro = dt / (dz * ro);
+
+            dt_dx_vvro = new float[Nx, Ny, Nz];
+            dt_dy_vvro = new float[Nx, Ny, Nz];
+            dt_dz_vvro = new float[Nx, Ny, Nz];
+            for(int i = 0; i < Nz; i++)
+                for(int j = 0; j < Nz; j++)
+                    for(int k = 0; k < Nz; k++)
+                    {
+                        dt_dx_vvro[i, j, k] = (dt / dx) * velocity[i, j, k] * velocity[i, j, k] * ro;
+                        dt_dy_vvro[i, j, k] = (dt / dy) * velocity[i, j, k] * velocity[i, j, k] * ro;
+                        dt_dz_vvro[i, j, k] = (dt / dz) * velocity[i, j, k] * velocity[i, j, k] * ro;
+                    }
+        }
+
         void InitGrid()
         {
             #region init P0, Vx, Vy
 
-            P0 = new double[Nx, Ny, Nz];
+            P0 = new float[Nx, Ny, Nz];
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     for(int k = 0; k < Nz; k++)
-                        P0[i, j, k] = 0;
+                        P0[i, j, k] = 0.0f;
 
-            Vx = new double[Nx + 1, Ny, Nz];
+            Vx = new float[Nx + 1, Ny, Nz];
             for (int i = 0; i <= Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     for (int k = 0; k < Nz; k++)
-                        Vx[i, j, k] = 0;
+                        Vx[i, j, k] = 0.0f;
 
-            Vy = new double[Nx, Ny + 1, Nz];
+            Vy = new float[Nx, Ny + 1, Nz];
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j <= Ny; j++)
                     for(int k = 0; k < Nz; k++)
-                        Vy[i, j, k] = 0;
+                        Vy[i, j, k] = 0.0f;
 
-            Vz = new double[Nx, Ny, Nz + 1];
+            Vz = new float[Nx, Ny, Nz + 1];
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
                     for(int k = 0; k <= Nz; k++)
-                        P0[i, j, k] = 0;
+                        Vz[i, j, k] = 0.0f;
 
             #endregion
 
             #region init Mur 1st
 
-            MurX = new double[4, Ny, Nz];
+            MurX = new float[4, Ny, Nz];
             for(int j = 0; j < Ny; j++)
                 for(int k = 0; j < Nz; j++)
                 {
-                    MurX[0, j, k] = 0.0;
-                    MurX[1, j, k] = 0.0;
-                    MurX[2, j, k] = 0.0;
-                    MurX[3, j, k] = 0.0;
+                    MurX[0, j, k] = 0.0f;
+                    MurX[1, j, k] = 0.0f;
+                    MurX[2, j, k] = 0.0f;
+                    MurX[3, j, k] = 0.0f;
                 }
 
-            MurY = new double[Nx, 4, Nz];
+            MurY = new float[Nx, 4, Nz];
             for(int i = 0; i < Nx; i++)
                 for(int k = 0; k < Nz; k++)
                 {
-                    MurY[i, 0, k] = 0.0;
-                    MurY[i, 1, k] = 0.0;
-                    MurY[i, 2, k] = 0.0;
-                    MurY[i, 3, k] = 0.0;
+                    MurY[i, 0, k] = 0.0f;
+                    MurY[i, 1, k] = 0.0f;
+                    MurY[i, 2, k] = 0.0f;
+                    MurY[i, 3, k] = 0.0f;
                 }
 
-            MurZ = new double[Nx, Ny, 4];
+            MurZ = new float[Nx, Ny, 4];
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
                 {
-                    MurZ[i, j, 0] = 0.0;
-                    MurZ[i, j, 1] = 0.0;
-                    MurZ[i, j, 2] = 0.0;
-                    MurZ[i, j, 3] = 0.0;
+                    MurZ[i, j, 0] = 0.0f;
+                    MurZ[i, j, 1] = 0.0f;
+                    MurZ[i, j, 2] = 0.0f;
+                    MurZ[i, j, 3] = 0.0f;
                 }
 
             #endregion
 
-            tCurrent = 0;
+            tCurrent = 0.0f;
         }
 
+        //
 
-        public void Close()
-        {
-            datWriter.Close();
-        }
-
-
-        public void SaveToCSV()
-        {
-            datWriter.WriteLine(("" + P0[Nx / 2, Ny / 2, Nz - 4] + ";").Replace(',', '.'));
-        }
-
-        public void FlushCSV()
-        {
-            datWriter.Flush();
-        }
-
-        double F(int i, int j, int k, double t)
+        float F(int i, int j, int  k, double t)
         {
             if( (Math.Abs(i - Nx / 2) <= 2) &&
                 (Math.Abs(j - Ny / 2) <= 2) &&
                 (Math.Abs(k - Nz / 2) <= 2) && t < 0.2)
             {
-                return Math.Cos(Math.PI * 2 * t);
+                return (float)Math.Cos(Math.PI * 2f * t);
             }
-            return 0;
-        }
-
-        public void SetCoefficients(double ro, double velocity)
-        {
-            this.ro = ro;
-            this.velocity = velocity;
+            return 0.0f;
         }
 
         #endregion
@@ -200,7 +205,7 @@ namespace wavemodel
 
         private void MurBoundaries()
         {
-            double reflectionCoefficient = 0.2;
+            float reflectionCoefficient = 0.2f;
 
             #region X повне згасання сигналу
 
@@ -210,7 +215,7 @@ namespace wavemodel
 
                     P0[0, j, k] =
                         MurX[1, j, k] +
-                        (velocity * dt - dx) / (velocity * dt + dx) * (P0[1, j, k] - MurX[0, j, k]);
+                        (P0[1, j, k] - MurX[0, j, k]) * velocityMur[0, j, k];
 
             // x == Lx
             for(int j = 1; j < Ny - 1; j++)
@@ -218,7 +223,7 @@ namespace wavemodel
 
                     P0[Nx - 1, j, k] =
                         MurX[2, j, k] +
-                        (velocity * dt - dx) / (velocity * dt + dx) * (P0[Nx - 2, j, k] - MurX[3, j, k]);
+                        (P0[Nx - 2, j, k] - MurX[3, j, k]) * velocityMur[Nx - 1, j, k];
 
 
             #endregion
@@ -231,7 +236,7 @@ namespace wavemodel
 
                     P0[i, 0, k] =
                         MurY[i, 1, k] +
-                        (velocity * dt - dy) / (velocity * dt + dy) * (P0[i, 1, k] - MurY[i, 0, k]);
+                        (P0[i, 1, k] - MurY[i, 0, k]) * velocityMur[i, 0, k];
 
             // y == Ly
             for(int i = 1; i < Nx - 1; i++)
@@ -239,7 +244,7 @@ namespace wavemodel
 
                     P0[i, Ny - 1, k] =
                         MurY[i, 2, k] +
-                        (velocity * dt - dy) / (velocity * dt + dy) * (P0[i, Ny - 2, k] - MurY[i, 3, k]);
+                        (P0[i, Ny - 2, k] - MurY[i, 3, k]) * velocityMur[i, Ny - 1, k];
 
 
             #endregion
@@ -251,18 +256,18 @@ namespace wavemodel
                 for(int j = 1; j < Ny - 1; j++)
 
                     P0[i, j, 0] =
-                        reflectionCoefficient * P0[i, j, 0] +
-                        (1 - reflectionCoefficient) * (MurZ[i, j, 1] +
-                        (velocity * dt - dz) / (velocity * dt + dz) * (P0[i, j, 1] - MurZ[i, j, 0]));
+                        reflectionCoefficient * P0[i, j, 0] + (1 - reflectionCoefficient) *
+                            (MurZ[i, j, 1] +
+                            (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[i, j, 0]);
 
             // z == Lz
             for(int i = 1; i < Nx - 1; i++)
                 for(int j = 1; j < Ny - 1; j++)
 
                     P0[i, j, Nz - 1] =
-                        reflectionCoefficient * P0[i, j, Nz - 1] +
-                        (1 - reflectionCoefficient) * (MurZ[i, j, 2] +
-                        (velocity * dt - dz) / (velocity * dt + dz) * (P0[i, j, Nz - 2] - MurZ[i, j, 3]));
+                        reflectionCoefficient * P0[i, j, Nz - 1] + (1 - reflectionCoefficient) *
+                            (MurZ[i, j, 2] +
+                            (P0[i, j, Nz - 2] - MurZ[i, j, 3]) * velocityMur[i, j, Nz - 1]);
 
             #endregion
 
@@ -305,10 +310,6 @@ namespace wavemodel
 
         private void UpdateV()
         {
-            double dt_dx_ro = dt / (dx * ro);
-            double dt_dy_ro = dt / (dy * ro);
-            double dt_dz_ro = dt / (dz * ro);
-
             for (int i = 1; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     for (int k = 0; k < Nz; k++)
@@ -323,31 +324,41 @@ namespace wavemodel
                 for (int j = 0; j < Ny; j++)
                     for (int k = 1; k < Nz; k++)
                         Vz[i, j, k] -= dt_dz_ro * (P0[i, j, k] - P0[i , j, k - 1]);
-
         }
 
         //
 
         private void UpdateP()
         {
-            double dt_dx_ro = (dt / dx) * ro * velocity * velocity;
-            double dt_dy_ro = (dt / dy) * ro * velocity * velocity;
-            double dt_dz_ro = (dt / dz) * ro * velocity * velocity;
-
             for (int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
                     for (int k = 0; k < Nz; k++)
                     {
                         P0[i, j, k] -=
-                        dt_dx_ro * (Vx[i + 1, j, k] - Vx[i, j, k]) +
-                        dt_dy_ro * (Vy[i, j + 1, k] - Vy[i, j, k]) +
-                        dt_dz_ro * (Vz[i, j, k + 1] - Vz[i, j, k]) - dt * this.F(i, j, k, tCurrent);
+                        dt_dx_vvro[i, j, k] * (Vx[i + 1, j, k] - Vx[i, j, k]) +
+                        dt_dy_vvro[i, j, k] * (Vy[i, j + 1, k] - Vy[i, j, k]) +
+                        dt_dz_vvro[i, j, k] * (Vz[i, j, k + 1] - Vz[i, j, k]) - dt * this.F(i, j, k, tCurrent);
                     }
         }
 
         #endregion
 
         #region save
+
+        public void SaveToCSV()
+        {
+            datWriter.WriteLine(("" + P0[Nx / 2, Ny / 2, Nz - 4] + ";").Replace(',', '.'));
+        }
+        public void FlushCSV()
+        {
+            datWriter.Flush();
+        }
+        public void Close()
+        {
+            datWriter.Close();
+        }
+
+        //
 
         public void SaveCurrentValuesP(String fileName)
         {
@@ -357,7 +368,6 @@ namespace wavemodel
                 for(int j = 0; j < Ny; j++)
                     outWriter.WriteLine((dx * i + " " + dy * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
         }
-
         public double GettCurrent()
         {
             return tCurrent;
