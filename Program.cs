@@ -9,11 +9,11 @@ namespace wavemodel
             int Step = 10;
             int Nx = 300 / Step;
             int Ny = 300 / Step;
-            int Nz = 300 / Step;
+            int Nz = 200 / Step;
 
             float [,,] velocity = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nz; i++)
-                for(int j = 0; j < Nz; j++)
+            for(int i = 0; i < Nx; i++)
+                for(int j = 0; j < Ny; j++)
                     for(int k = 0; k < Nz; k++)
                         velocity[i, j, k] = 1500 + k;
 

@@ -52,8 +52,8 @@ namespace wavemodel
 
             dt_dx_ro = dt / (10 * ro);
             dt_dx_vvro = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nz; i++)
-                for(int j = 0; j < Nz; j++)
+            for(int i = 0; i < Nx; i++)
+                for(int j = 0; j < Ny; j++)
                     for(int k = 0; k < Nz; k++)
                         dt_dx_vvro[i, j, k] = (dt / 10) * velocity[i, j, k] * velocity[i, j, k] * ro;
         }
