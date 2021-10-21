@@ -183,7 +183,8 @@ namespace wavemodel
             float reflectionCoefficient = 0.2f;
 
             #region X повне згасання сигналу
-            // x==0
+
+            // x == 0
             for(int j = 1; j < Ny - 1; j++)
                 for(int k = 0; k < Nz; k++)
 
