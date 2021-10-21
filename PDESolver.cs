@@ -162,9 +162,9 @@ namespace wavemodel
                     P0[0, j, k] =
                         MurX[1, j, k] +
                         (P0[1, j, k] - MurX[0, j, k]) * velocityMur[k];
-
+            
             // x == Lx
-            for(int j = 1; j < Ny - 1; j++)
+            for (int j = 1; j < Ny - 1; j++)
                 for(int k = 0; k < Nz; k++)
 
                     P0[Nx - 1, j, k] =

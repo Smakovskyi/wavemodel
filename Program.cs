@@ -58,7 +58,7 @@ namespace wavemodel
 		static void Main(/*string[] args*/)
         {
 			PDESolver pdeSolver = new PDESolver();
-            pdeSolver.Init(0.0005f, Nx, Ny, Nz);
+            pdeSolver.Init(0.015f, Nx, Ny, Nz);
             pdeSolver.SetCoefficients(1000, BathC);
 
             while(pdeSolver.GettCurrent() < 1.0)
