@@ -7,7 +7,7 @@ namespace wavemodel
 		#region bathymetry var
 
 		// bathymetry 15000m x 15000m with a step 500m
-		public static int[,] BathH = {
+		public static float[,] BathH = {
 			{ 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2250, 1750, 1250,  750,  250,    0,  250,  750, 1250, 1750, 2250, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500},
 			{ 2500, 2375, 2250, 2250, 2250, 2250, 2250, 2250, 2250, 2250, 2125, 1750, 1250,  750,  250,    0,  250,  750, 1250, 1750, 2125, 2250, 2250, 2250, 2250, 2250, 2250, 2250, 2250, 2375, 2500},
 			{ 2500, 2250, 1875, 1750, 1750, 1750, 1750, 1750, 1750, 1750, 1750, 1625, 1250,  750,  250,    0,  250,  750, 1250, 1625, 1750, 1750, 1750, 1750, 1750, 1750, 1750, 1750, 1875, 2250, 2500},
@@ -63,7 +63,15 @@ namespace wavemodel
 		static void Main(/*string[] args*/)
         {
 			PDESolver pdeSolver = new PDESolver();
-            pdeSolver.Init(0.0005f, Nx, Ny, Nz);
+			//Console.WriteLine(BathH.GetLength(0) + " ==== " + BathH.GetLength(1));
+			for(int i=0; i <= Nx; i++)
+            {
+				for(int j=0; j<=Ny; j++)
+                {
+					BathH[i, j] = 2500 - BathH[i, j];
+				}
+            }
+            pdeSolver.Init(0.015f, Nx, Ny, Nz, BathH);
             pdeSolver.SetCoefficients(1000, BathC);
 
             while(pdeSolver.GettCurrent() < 1.0)
