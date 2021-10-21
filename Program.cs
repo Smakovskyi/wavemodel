@@ -11,11 +11,10 @@ namespace wavemodel
             int Ny = 300 / Step;
             int Nz = 200 / Step;
 
-            float [,,] velocity = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        velocity[i, j, k] = 1500 + k;
+            float [] velocity = new float[Nz];
+            
+            for(int k = 0; k < Nz; k++)
+                        velocity[k] = 1500 + k;
 
             PDESolver pdeSolver = new PDESolver();
             pdeSolver.Init(0.0001f, Nx, Ny, Nz);

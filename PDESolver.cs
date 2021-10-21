@@ -6,6 +6,8 @@ namespace wavemodel
 {
     public class PDESolver
     {
+        const float Step = 10;
+
         #region var
 
         StreamWriter datWriter;
@@ -18,13 +20,13 @@ namespace wavemodel
         float[,,] MurX;
         float[,,] MurY;
         float[,,] MurZ;
-        float[,,] velocityMur;
+        float[] velocityMur;
 
         float dt;
         float tCurrent;
 
         float dt_dx_ro;
-        float [,,] dt_dx_vvro;
+        float [] dt_dx_vvro;
 
         #endregion
 
@@ -42,20 +44,17 @@ namespace wavemodel
 
             InitGrid();
         }
-        public void SetCoefficients(float ro, float[,,] velocity)
+        public void SetCoefficients(float ro, float[] velocity)
         {
-            velocityMur = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        velocityMur[i, j, k] = (velocity[i, j, k] * dt - 10) / (velocity[i, j, k] * dt + 10);
+            velocityMur = new float[Nz];
+            for(int k = 0; k < Nz; k++)
+                velocityMur[k] = (velocity[k] * dt - Step) / (velocity[k] * dt + Step);
 
-            dt_dx_ro = dt / (10 * ro);
-            dt_dx_vvro = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        dt_dx_vvro[i, j, k] = (dt / 10) * velocity[i, j, k] * velocity[i, j, k] * ro;
+            dt_dx_ro = dt / (Step * ro);
+            dt_dx_vvro = new float[Nz];
+            
+            for(int k = 0; k < Nz; k++)
+                dt_dx_vvro[k] = (dt / Step) * velocity[k] * velocity[k] * ro;
         }
 
         void InitGrid()
@@ -163,7 +162,7 @@ namespace wavemodel
 
                     P0[0, j, k] =
                         MurX[1, j, k] +
-                        (P0[1, j, k] - MurX[0, j, k]) * velocityMur[0, j, k];
+                        (P0[1, j, k] - MurX[0, j, k]) * velocityMur[k];
 
             // x == Lx
             for(int j = 1; j < Ny - 1; j++)
@@ -171,7 +170,7 @@ namespace wavemodel
 
                     P0[Nx - 1, j, k] =
                         MurX[2, j, k] +
-                        (P0[Nx - 2, j, k] - MurX[3, j, k]) * velocityMur[Nx - 1, j, k];
+                        (P0[Nx - 2, j, k] - MurX[3, j, k]) * velocityMur[k];
 
 
             #endregion
@@ -184,7 +183,7 @@ namespace wavemodel
 
                     P0[i, 0, k] =
                         MurY[i, 1, k] +
-                        (P0[i, 1, k] - MurY[i, 0, k]) * velocityMur[i, 0, k];
+                        (P0[i, 1, k] - MurY[i, 0, k]) * velocityMur[k];
 
             // y == Ly
             for(int i = 1; i < Nx - 1; i++)
@@ -192,7 +191,7 @@ namespace wavemodel
 
                     P0[i, Ny - 1, k] =
                         MurY[i, 2, k] +
-                        (P0[i, Ny - 2, k] - MurY[i, 3, k]) * velocityMur[i, Ny - 1, k];
+                        (P0[i, Ny - 2, k] - MurY[i, 3, k]) * velocityMur[k];
 
 
             #endregion
@@ -206,7 +205,7 @@ namespace wavemodel
                     P0[i, j, 0] =
                         reflectionCoefficient * P0[i, j, 0] + (1 - reflectionCoefficient) *
                             (MurZ[i, j, 1] +
-                            (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[i, j, 0]);
+                            (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
 
             // z == Lz
             for(int i = 1; i < Nx - 1; i++)
@@ -215,7 +214,7 @@ namespace wavemodel
                     P0[i, j, Nz - 1] =
                         reflectionCoefficient * P0[i, j, Nz - 1] + (1 - reflectionCoefficient) *
                             (MurZ[i, j, 2] +
-                            (P0[i, j, Nz - 2] - MurZ[i, j, 3]) * velocityMur[i, j, Nz - 1]);
+                            (P0[i, j, Nz - 2] - MurZ[i, j, 3]) * velocityMur[Nz - 1]);
 
             #endregion
 
@@ -283,7 +282,7 @@ namespace wavemodel
                     for (int k = 0; k < Nz; k++)
                     {
                         P0[i, j, k] -=
-                            dt_dx_vvro[i, j, k] *
+                            dt_dx_vvro[k] *
                                 (
                                 Vx[i + 1, j, k] - Vx[i, j, k] +
                                 Vy[i, j + 1, k] - Vy[i, j, k] +
