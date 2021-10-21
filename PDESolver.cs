@@ -20,6 +20,8 @@ namespace wavemodel
         float[,,] MurY;
         float[,,] MurZ;
         float[] velocityMur;
+        float[,] bathymetry;
+        int[,] maxK;
 
         float dt;
         float tCurrent;
@@ -31,7 +33,7 @@ namespace wavemodel
 
         #region init
 
-        public void Init(float dt, int Nx, int Ny, int Nz)
+        public void Init(float dt, int Nx, int Ny, int Nz, float [,] bathymetry)
         {
             this.dt = dt;
 
@@ -39,10 +41,18 @@ namespace wavemodel
             this.Ny = Ny;
             this.Nz = Nz;
 
-            datWriter = new StreamWriter("P_all.csv", false, System.Text.Encoding.Default);
+            this.bathymetry = bathymetry;
 
+            datWriter = new StreamWriter("P_all.csv", false, System.Text.Encoding.Default);
+            
+            InitMaxK();
             InitGrid();
+            MurInit();
+            
         }
+
+        
+
         public void SetCoefficients(float ro, float[] velocity)
         {
             velocityMur = new float[Nz];
@@ -86,11 +96,18 @@ namespace wavemodel
 
             #endregion
 
+           
+
+            tCurrent = 0.0f;
+        }
+
+        private void MurInit()
+        {
             #region init Mur 1st
 
             MurX = new float[4, Ny, Nz];
-            for(int j = 0; j < Ny; j++)
-                for(int k = 0; k < Nz; k++)
+            for (int j = 0; j < Ny; j++)
+                for (int k = 0; k < Nz; k++)
                 {
                     MurX[0, j, k] = 0.0f;
                     MurX[1, j, k] = 0.0f;
@@ -99,8 +116,8 @@ namespace wavemodel
                 }
 
             MurY = new float[Nx, 4, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int k = 0; k < Nz; k++)
+            for (int i = 0; i < Nx; i++)
+                for (int k = 0; k < Nz; k++)
                 {
                     MurY[i, 0, k] = 0.0f;
                     MurY[i, 1, k] = 0.0f;
@@ -109,8 +126,8 @@ namespace wavemodel
                 }
 
             MurZ = new float[Nx, Ny, 4];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
+            for (int i = 0; i < Nx; i++)
+                for (int j = 0; j < Ny; j++)
                 {
                     MurZ[i, j, 0] = 0.0f;
                     MurZ[i, j, 1] = 0.0f;
@@ -120,7 +137,19 @@ namespace wavemodel
 
             #endregion
 
-            tCurrent = 0.0f;
+        }
+        private void InitMaxK()
+        {
+            maxK = new int[Nx + 1, Ny + 1];
+
+            for (int i = 0; i <= Nx; i++)
+            {
+                for (int j = 0; j <= Ny; j++)
+                {
+                    double Deepth = bathymetry[i, j];
+                    maxK[i, j] = (int)(Deepth / Step);
+                }
+            }
         }
 
         //
@@ -276,8 +305,11 @@ namespace wavemodel
         private void UpdateP()
         {
             for (int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
+                for (int j = 0; j < Ny; j++)
+                {
+
+                    int MaxK = maxK[i, j]; 
+                    for (int k = 0; k < MaxK; k++)
                     {
                         P0[i, j, k] -=
                             dt_dx_vvro[k] *
@@ -287,6 +319,7 @@ namespace wavemodel
                                 Vz[i, j, k + 1] - Vz[i, j, k]
                                 ) - dt * this.F(i, j, k, tCurrent);
                     }
+                }
         }
 
         #endregion
