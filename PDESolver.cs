@@ -8,7 +8,7 @@ namespace wavemodel
     {
         #region var
 
-        int Step = 50;
+        int Step = 100;
         StreamWriter datWriter;
 
         float[,,] P0;
@@ -160,7 +160,7 @@ namespace wavemodel
                 (Math.Abs(j - Ny / 2) <= 2) &&
                 (Math.Abs(k - Nz / 2) <= 2) && t < 0.2)
             {
-                return (float)Math.Cos(Math.PI * 2f * t);
+                return (float)Math.Cos(Math.PI * 500 * t);
             }
             return 0.0f;
         }
@@ -201,7 +201,6 @@ namespace wavemodel
                     P0[Nx - 1, j, k] =
                         MurX[2, j, k] +
                         (P0[Nx - 2, j, k] - MurX[3, j, k]) * velocityMur[k];
-
 
             #endregion
 

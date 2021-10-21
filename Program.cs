@@ -41,17 +41,22 @@ namespace wavemodel
 			{ 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2250, 1750, 1250,  750,  250,    0,  250,  750, 1250, 1750, 2250, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500, 2500}
 			};
 
-		// speed profile from 0m to -3000m with a step 50m
-		public static float[] BathC =
-			{ 1500, 1505, 1515, 1530, 1525, 1520, 1515, 1510, 1505, 1500, 1495, 1490, 1485, 1480, 1470, 1460, 1450, 1440, 1430, 1420, 1410, 1400, 1405, 1410, 1415, 1420, 1425, 1430, 1435, 1440, 1445};
+		// speed profile from 0m to -2500m with a step 100m
+		public static float[] BathC = {
+				1500,							//    0 m
+				1505, 1515, 1530, 1525, 1520,	//  500 m
+				1515, 1510, 1505, 1500, 1495,	// 1000 m
+				1490, 1485, 1480, 1470, 1460,	// 1500 m
+				1450, 1440, 1430, 1420, 1410,	// 2000 m
+				1400, 1405, 1410, 1415, 1420};  // 2500 m
 
 		public static float graphStep = 0.01f;
 		public static float graphTime = 0.01f;
 
-		// int Step = 50;
+		// int Step = 100;
 		public static int Nx = 30; // 300; // 15000 / Step;
 		public static int Ny = 30; // 300; // 15000 / Step;
-		public static int Nz = 30; // 30;  // 1500  / Step;
+		public static int Nz = 26; // 30;  // 1500  / Step;
 
 		#endregion
 
