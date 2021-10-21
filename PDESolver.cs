@@ -51,6 +51,7 @@ namespace wavemodel
 
             dt_dx_ro = dt / (Step * ro);
             dt_dx_vvro = new float[Nz];
+            
             for(int k = 0; k < Nz; k++)
                 dt_dx_vvro[k] = (dt / Step) * velocity[k] * velocity[k] * ro;
         }
@@ -154,7 +155,6 @@ namespace wavemodel
 
             #region X повне згасання сигналу
 
-            // x == 0
             for(int j = 1; j < Ny - 1; j++)
                 for(int k = 0; k < Nz; k++)
 
