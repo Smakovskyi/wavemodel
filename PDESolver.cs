@@ -6,10 +6,9 @@ namespace wavemodel
 {
     public class PDESolver
     {
-        const float Step = 10;
-
         #region var
 
+        int Step = 50;
         StreamWriter datWriter;
 
         float[,,] P0;
@@ -91,7 +90,7 @@ namespace wavemodel
 
             MurX = new float[4, Ny, Nz];
             for(int j = 0; j < Ny; j++)
-                for(int k = 0; j < Nz; j++)
+                for(int k = 0; k < Nz; k++)
                 {
                     MurX[0, j, k] = 0.0f;
                     MurX[1, j, k] = 0.0f;
@@ -143,8 +142,8 @@ namespace wavemodel
         {
             UpdateV();
             UpdateP();
-            MurBoundaries();  
-            
+            MurBoundaries();
+
             tCurrent += dt;
         }
 
@@ -156,7 +155,6 @@ namespace wavemodel
 
             #region X повне згасання сигналу
 
-            // x == 0
             for(int j = 1; j < Ny - 1; j++)
                 for(int k = 0; k < Nz; k++)
 
@@ -260,7 +258,7 @@ namespace wavemodel
             for (int i = 1; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
                     for (int k = 0; k < Nz; k++)
-                        Vx[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i - 1, j , k]);
+                        Vx[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i - 1, j, k]);
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 1; j < Ny; j++)
@@ -316,7 +314,7 @@ namespace wavemodel
 
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    outWriter.WriteLine((10 * i + " " + 10 * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
+                    outWriter.WriteLine((Step * i + " " + Step * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
         }
         public float GettCurrent()
         {
