@@ -63,7 +63,7 @@ namespace wavemodel
             {
 				for(int j=0; j<=Ny; j++)
                 {
-					BathH[i, j] = 2500 - BathH[i, j];
+					BathH[i, j] = (float)(1500.0 - BathH[i, j]*15.0/25.0);
 				}
             }
             pdeSolver.Init(0.015f, Nx, Ny, Nz, BathH);

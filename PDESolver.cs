@@ -185,16 +185,18 @@ namespace wavemodel
             #region X повне згасання сигналу
 
             // x == 0
+            int ii = 0;
             for(int j = 1; j < Ny - 1; j++)
-                for(int k = 0; k < Nz; k++)
+                for(int k = 0; k < maxK[ii,j]; k++)
 
                     P0[0, j, k] =
                         MurX[1, j, k] +
                         (P0[1, j, k] - MurX[0, j, k]) * velocityMur[k];
-            
+
             // x == Lx
+            ii = Nx;
             for (int j = 1; j < Ny - 1; j++)
-                for(int k = 0; k < Nz; k++)
+                for(int k = 0; k < maxK[ii,j]; k++)
 
                     P0[Nx - 1, j, k] =
                         MurX[2, j, k] +
@@ -206,16 +208,18 @@ namespace wavemodel
             #region Y повне згасання сигналу
 
             // y == 0
+            int jj = 0;
             for(int i = 1; i < Nx - 1; i++)
-                for(int k = 0; k < Nz; k++)
+                for(int k = 0; k < maxK[i, jj]; k++)
 
                     P0[i, 0, k] =
                         MurY[i, 1, k] +
                         (P0[i, 1, k] - MurY[i, 0, k]) * velocityMur[k];
 
             // y == Ly
+            jj = Ny;
             for(int i = 1; i < Nx - 1; i++)
-                for(int k = 0; k < Nz; k++)
+                for(int k = 0; k < maxK[i, jj]; k++)
 
                     P0[i, Ny - 1, k] =
                         MurY[i, 2, k] +
@@ -227,22 +231,26 @@ namespace wavemodel
             #region Z відбиття від поверхні і дна
 
             // z == 0
-            for(int i = 1; i < Nx - 1; i++)
-                for(int j = 1; j < Ny - 1; j++)
+            for (int i = 1; i < Nx - 1; i++)
+                for (int j = 1; j < Ny - 1; j++)
+                {
+                    int kMax = maxK[ii, j];
+                    if (kMax > 2)
+                    {
+                        P0[i, j, 0] =
+                            reflectionCoefficient * P0[i, j, 0] + (1 - reflectionCoefficient) *
+                                (MurZ[i, j, 1] +
+                                (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
+                        
+                        
+                        P0[i, j, kMax - 1] =
+                            reflectionCoefficient * P0[i, j, kMax - 1] + (1 - reflectionCoefficient) *
+                                (MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1]);
+                    }
+                }
 
-                    P0[i, j, 0] =
-                        reflectionCoefficient * P0[i, j, 0] + (1 - reflectionCoefficient) *
-                            (MurZ[i, j, 1] +
-                            (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
-
-            // z == Lz
-            for(int i = 1; i < Nx - 1; i++)
-                for(int j = 1; j < Ny - 1; j++)
-
-                    P0[i, j, Nz - 1] =
-                        reflectionCoefficient * P0[i, j, Nz - 1] + (1 - reflectionCoefficient) *
-                            (MurZ[i, j, 2] +
-                            (P0[i, j, Nz - 2] - MurZ[i, j, 3]) * velocityMur[Nz - 1]);
+            
+            
 
             #endregion
 
@@ -287,18 +295,29 @@ namespace wavemodel
         {
             for (int i = 1; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
+                {
+                    int MaxK = maxK[i, j];
+                    for (int k = 0; k < MaxK; k++)
                         Vx[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i - 1, j, k]);
+                }
+                    
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 1; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
+                {
+                    int MaxK = maxK[i, j];
+                    for (int k = 0; k < MaxK; k++)
                         Vy[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i, j - 1, k]);
+                }
+
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for (int k = 1; k < Nz; k++)
-                        Vz[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i , j, k - 1]);
+                {
+                    int MaxK = maxK[i, j];
+                    for (int k = 1; k < MaxK; k++)
+                        Vz[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i, j, k - 1]);
+                }
         }
 
         //
