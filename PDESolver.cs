@@ -8,6 +8,7 @@ namespace wavemodel
     {
         #region var
 
+        int Step = 50;
         StreamWriter datWriter;
 
         float[,,] P0;
@@ -18,13 +19,13 @@ namespace wavemodel
         float[,,] MurX;
         float[,,] MurY;
         float[,,] MurZ;
-        float[,,] velocityMur;
+        float[] velocityMur;
 
         float dt;
         float tCurrent;
 
         float dt_dx_ro;
-        float [,,] dt_dx_vvro;
+        float [] dt_dx_vvro;
 
         #endregion
 
@@ -42,20 +43,16 @@ namespace wavemodel
 
             InitGrid();
         }
-        public void SetCoefficients(float ro, float[,,] velocity)
+        public void SetCoefficients(float ro, float[] velocity)
         {
-            velocityMur = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        velocityMur[i, j, k] = (velocity[i, j, k] * dt - 10) / (velocity[i, j, k] * dt + 10);
+            velocityMur = new float[Nz];
+            for(int h = 0; h < Nz; h++)
+                velocityMur[h] = (velocity[h] * dt - Step) / (velocity[h] * dt + Step);
 
-            dt_dx_ro = dt / (10 * ro);
-            dt_dx_vvro = new float[Nx, Ny, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        dt_dx_vvro[i, j, k] = (dt / 10) * velocity[i, j, k] * velocity[i, j, k] * ro;
+            dt_dx_ro = dt / (Step * ro);
+            dt_dx_vvro = new float[Nz];
+            for(int h = 0; h < Nz; h++)
+                dt_dx_vvro[h] = (dt / Step) * velocity[h] * velocity[h] * ro;
         }
 
         void InitGrid()
@@ -65,26 +62,26 @@ namespace wavemodel
             P0 = new float[Nx, Ny, Nz];
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        P0[i, j, k] = 0.0f;
+                    for(int h = 0; h < Nz; h++)
+                        P0[i, j, h] = 0.0f;
 
             Vx = new float[Nx + 1, Ny, Nz];
             for (int i = 0; i <= Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
-                        Vx[i, j, k] = 0.0f;
+                    for (int h = 0; h < Nz; h++)
+                        Vx[i, j, h] = 0.0f;
 
             Vy = new float[Nx, Ny + 1, Nz];
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j <= Ny; j++)
-                    for(int k = 0; k < Nz; k++)
-                        Vy[i, j, k] = 0.0f;
+                    for(int h = 0; h < Nz; h++)
+                        Vy[i, j, h] = 0.0f;
 
             Vz = new float[Nx, Ny, Nz + 1];
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k <= Nz; k++)
-                        Vz[i, j, k] = 0.0f;
+                    for(int h = 0; h <= Nz; h++)
+                        Vz[i, j, h] = 0.0f;
 
             #endregion
 
@@ -92,22 +89,22 @@ namespace wavemodel
 
             MurX = new float[4, Ny, Nz];
             for(int j = 0; j < Ny; j++)
-                for(int k = 0; j < Nz; j++)
+                for(int h = 0; h < Nz; h++)
                 {
-                    MurX[0, j, k] = 0.0f;
-                    MurX[1, j, k] = 0.0f;
-                    MurX[2, j, k] = 0.0f;
-                    MurX[3, j, k] = 0.0f;
+                    MurX[0, j, h] = 0.0f;
+                    MurX[1, j, h] = 0.0f;
+                    MurX[2, j, h] = 0.0f;
+                    MurX[3, j, h] = 0.0f;
                 }
 
             MurY = new float[Nx, 4, Nz];
             for(int i = 0; i < Nx; i++)
-                for(int k = 0; k < Nz; k++)
+                for(int h = 0; h < Nz; h++)
                 {
-                    MurY[i, 0, k] = 0.0f;
-                    MurY[i, 1, k] = 0.0f;
-                    MurY[i, 2, k] = 0.0f;
-                    MurY[i, 3, k] = 0.0f;
+                    MurY[i, 0, h] = 0.0f;
+                    MurY[i, 1, h] = 0.0f;
+                    MurY[i, 2, h] = 0.0f;
+                    MurY[i, 3, h] = 0.0f;
                 }
 
             MurZ = new float[Nx, Ny, 4];
@@ -144,8 +141,15 @@ namespace wavemodel
         {
             UpdateV();
             UpdateP();
-            MurBoundaries();  
+            MurBoundaries();
             
+            for(int j = 0; j < Ny; j++)
+                for(int h = 0; h < Nz; h++)
+                {
+                    P0[0, j, h] = P0[1, j, h];
+                    P0[Nx - 1, j, h] = P0[Nx - 1, j, h];
+                }
+
             tCurrent += dt;
         }
 
@@ -157,22 +161,19 @@ namespace wavemodel
 
             #region X повне згасання сигналу
 
-            // x == 0
+            /*
             for(int j = 1; j < Ny - 1; j++)
-                for(int k = 0; k < Nz; k++)
+                for(int h = 0; h < Nz; h++)
+                {
+                    P0[0, j, h] =
+                        MurX[1, j, h] +
+                        (P0[1, j, h] - MurX[0, j, h]) * velocityMur[h];
 
-                    P0[0, j, k] =
-                        MurX[1, j, k] +
-                        (P0[1, j, k] - MurX[0, j, k]) * velocityMur[0, j, k];
-
-            // x == Lx
-            for(int j = 1; j < Ny - 1; j++)
-                for(int k = 0; k < Nz; k++)
-
-                    P0[Nx - 1, j, k] =
-                        MurX[2, j, k] +
-                        (P0[Nx - 2, j, k] - MurX[3, j, k]) * velocityMur[Nx - 1, j, k];
-
+                    P0[Nx - 1, j, h] =
+                        MurX[2, j, h] +
+                        (P0[Nx - 2, j, h] - MurX[3, j, h]) * velocityMur[h];
+                }
+            */
 
             #endregion
 
@@ -180,19 +181,19 @@ namespace wavemodel
 
             // y == 0
             for(int i = 1; i < Nx - 1; i++)
-                for(int k = 0; k < Nz; k++)
+                for(int h = 0; h < Nz; h++)
 
-                    P0[i, 0, k] =
-                        MurY[i, 1, k] +
-                        (P0[i, 1, k] - MurY[i, 0, k]) * velocityMur[i, 0, k];
+                    P0[i, 0, h] =
+                        MurY[i, 1, h] +
+                        (P0[i, 1, h] - MurY[i, 0, h]) * velocityMur[h];
 
             // y == Ly
             for(int i = 1; i < Nx - 1; i++)
-                for(int k = 0; k < Nz; k++)
+                for(int h = 0; h < Nz; h++)
 
-                    P0[i, Ny - 1, k] =
-                        MurY[i, 2, k] +
-                        (P0[i, Ny - 2, k] - MurY[i, 3, k]) * velocityMur[i, Ny - 1, k];
+                    P0[i, Ny - 1, h] =
+                        MurY[i, 2, h] +
+                        (P0[i, Ny - 2, h] - MurY[i, 3, h]) * velocityMur[h];
 
 
             #endregion
@@ -206,7 +207,7 @@ namespace wavemodel
                     P0[i, j, 0] =
                         reflectionCoefficient * P0[i, j, 0] + (1 - reflectionCoefficient) *
                             (MurZ[i, j, 1] +
-                            (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[i, j, 0]);
+                            (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
 
             // z == Lz
             for(int i = 1; i < Nx - 1; i++)
@@ -215,7 +216,7 @@ namespace wavemodel
                     P0[i, j, Nz - 1] =
                         reflectionCoefficient * P0[i, j, Nz - 1] + (1 - reflectionCoefficient) *
                             (MurZ[i, j, 2] +
-                            (P0[i, j, Nz - 2] - MurZ[i, j, 3]) * velocityMur[i, j, Nz - 1]);
+                            (P0[i, j, Nz - 2] - MurZ[i, j, 3]) * velocityMur[Nz - 1]);
 
             #endregion
 
@@ -225,21 +226,21 @@ namespace wavemodel
         private void MurCopy()
         {
             for(int j = 0; j < Ny; j++)
-                for(int k = 0; k < Nz; k++)
+                for(int h = 0; h < Nz; h++)
                 {
-                    MurX[0, j, k] = P0[0, j, k];
-                    MurX[1, j, k] = P0[1, j, k];
-                    MurX[2, j, k] = P0[Nx - 2, j, k];
-                    MurX[3, j, k] = P0[Nx - 1, j, k];
+                    MurX[0, j, h] = P0[0, j, h];
+                    MurX[1, j, h] = P0[1, j, h];
+                    MurX[2, j, h] = P0[Nx - 2, j, h];
+                    MurX[3, j, h] = P0[Nx - 1, j, h];
                 }
 
             for(int i = 0; i < Nx; i++)
-                for(int k = 0; k < Nz; k++)
+                for(int h = 0; h < Nz; h++)
                 {
-                    MurY[i, 0, k] = P0[i, 0, k];
-                    MurY[i, 1, k] = P0[i, 1, k];
-                    MurY[i, 2, k] = P0[i, Ny - 2, k];
-                    MurY[i, 3, k] = P0[i, Ny - 1, k];
+                    MurY[i, 0, h] = P0[i, 0, h];
+                    MurY[i, 1, h] = P0[i, 1, h];
+                    MurY[i, 2, h] = P0[i, Ny - 2, h];
+                    MurY[i, 3, h] = P0[i, Ny - 1, h];
                 }
 
             for(int i = 0; i < Nx; i++)
@@ -260,18 +261,18 @@ namespace wavemodel
         {
             for (int i = 1; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
-                        Vx[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i - 1, j , k]);
+                    for (int h = 0; h < Nz; h++)
+                        Vx[i, j, h] -= dt_dx_ro * (P0[i, j, h] - P0[i - 1, j, h]);
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 1; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
-                        Vy[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i, j - 1, k]);
+                    for (int h = 0; h < Nz; h++)
+                        Vy[i, j, h] -= dt_dx_ro * (P0[i, j, h] - P0[i, j - 1, h]);
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for (int k = 1; k < Nz; k++)
-                        Vz[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i , j, k - 1]);
+                    for (int h = 1; h < Nz; h++)
+                        Vz[i, j, h] -= dt_dx_ro * (P0[i, j, h] - P0[i , j, h - 1]);
         }
 
         //
@@ -280,15 +281,15 @@ namespace wavemodel
         {
             for (int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
+                    for (int h = 0; h < Nz; h++)
                     {
-                        P0[i, j, k] -=
-                            dt_dx_vvro[i, j, k] *
+                        P0[i, j, h] -=
+                            dt_dx_vvro[h] *
                                 (
-                                Vx[i + 1, j, k] - Vx[i, j, k] +
-                                Vy[i, j + 1, k] - Vy[i, j, k] +
-                                Vz[i, j, k + 1] - Vz[i, j, k]
-                                ) - dt * this.F(i, j, k, tCurrent);
+                                Vx[i + 1, j, h] - Vx[i, j, h] +
+                                Vy[i, j + 1, h] - Vy[i, j, h] +
+                                Vz[i, j, h + 1] - Vz[i, j, h]
+                                ) - dt * this.F(i, j, h, tCurrent);
                     }
         }
 
@@ -317,7 +318,7 @@ namespace wavemodel
 
             for(int i = 0; i < Nx; i++)
                 for(int j = 0; j < Ny; j++)
-                    outWriter.WriteLine((10 * i + " " + 10 * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
+                    outWriter.WriteLine((Step * i + " " + Step * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
         }
         public float GettCurrent()
         {
