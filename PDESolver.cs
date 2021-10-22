@@ -22,12 +22,17 @@ namespace wavemodel
         float[] velocityMur;
         float[,] bathymetry;
         int[,] maxK;
+        //angles for normal vector to the bottom
+        float[,] cosA2;
+        float[,] cosB2;
+        float[,] cosY2;
 
         float dt;
         float tCurrent;
 
         float dt_dx_ro;
         float [] dt_dx_vvro;
+        float reflectionCoefficient = 0.2f;
 
         #endregion
 
@@ -47,6 +52,7 @@ namespace wavemodel
             
             InitMaxK();
             InitGrid();
+            initAngles();
             MurInit();
             
         }
@@ -138,6 +144,40 @@ namespace wavemodel
             #endregion
 
         }
+
+        void initAngles()
+        {
+            cosA2 = new float[Nx + 1, Ny + 1];
+            cosB2 = new float[Nx + 1, Ny + 1];
+            cosY2 = new float[Nx + 1, Ny + 1];
+            initAnglesForBottom();
+        }
+
+        // HACK: interpolation mass. re-do to bath
+        void initAnglesForBottom()
+        {
+            for (int i = 0; i < Nx; i++)
+            {
+                for (int j = 0; j < Ny; j++)
+                {
+                    float dfx = (bathymetry[i + 1, j] - bathymetry[i, j]) / Step;
+                    float dfy = (bathymetry[i, j + 1] - bathymetry[i, j]) / Step;
+                    float len =(float) Math.Sqrt(dfx * dfx + dfy * dfy + 1);
+                    cosA2[i, j] = dfx / len;
+                    cosB2[i, j] = dfy / len;
+                    cosY2[i, j] = -1 / len;
+                }
+                cosA2[i, Ny] = cosA2[i, Ny - 1];
+                cosB2[i, Ny] = cosB2[i, Ny - 1];
+                cosY2[i, Ny] = cosY2[i, Ny - 1];
+            }
+            for (int j = 0; j <= Ny; j++)
+            {
+                cosA2[Nx, j] = cosA2[Nx - 1, j];
+                cosB2[Nx, j] = cosB2[Nx - 1, j];
+                cosY2[Nx, j] = cosY2[Nx - 1, j];
+            }
+        }
         private void InitMaxK()
         {
             maxK = new int[Nx + 1, Ny + 1];
@@ -180,7 +220,7 @@ namespace wavemodel
 
         private void MurBoundaries()
         {
-            float reflectionCoefficient = 0.2f;
+            
 
             #region X повне згасання сигналу
 
@@ -229,31 +269,48 @@ namespace wavemodel
 
             #region Z відбиття від поверхні і дна
 
-            // z == 0
-            for (int i = 1; i < Nx - 1; i++)
-                for (int j = 1; j < Ny - 1; j++)
-                {
-                    int kMax = maxK[ii, j];
-                    if (kMax > 2)
-                    {
-                        P0[i, j, 0] =
-                            reflectionCoefficient * P0[i, j, 0] + (1 - reflectionCoefficient) *
-                                (MurZ[i, j, 1] +
-                                (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
-                        
-                        
-                        P0[i, j, kMax - 1] =
-                            reflectionCoefficient * P0[i, j, kMax - 1] + (1 - reflectionCoefficient) *
-                                (MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1]);
-                    }
-                }
-
+            
             
             
 
             #endregion
 
             MurCopy();
+        }
+
+        private void TopReflection()
+        {
+            // z == 0
+            for (int i = 1; i < Nx - 1; i++)
+            {
+                for (int j = 1; j < Ny - 1; j++)
+                {
+                    int kMax = maxK[i, j];
+                    if (kMax > 2)
+                    {
+                        P0[i, j, 0] = reflectionCoefficient * P0[i, j, 0] +
+                                (1 - reflectionCoefficient) *
+                                (MurZ[i, j, 1] +(P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
+                    }
+                }
+            }
+
+        }
+
+        private void BottomReflection()
+        {
+            
+            for (int i = 1; i < Nx - 1; i++)
+                for (int j = 1; j < Ny - 1; j++)
+                {
+                    int kMax = maxK[i, j];
+                    if (kMax > 2)
+                    {
+                            P0[i, j, kMax - 1] =
+                            reflectionCoefficient * P0[i, j, kMax - 1] + (1 - reflectionCoefficient) *
+                                (MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1]);
+                    }
+                }
         }
 
         private void MurCopy()
