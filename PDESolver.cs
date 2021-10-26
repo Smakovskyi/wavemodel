@@ -269,11 +269,9 @@ namespace wavemodel
 
             #region Z відбиття від поверхні і дна
 
-            
-            
-            
-
             #endregion
+            TopReflection();
+            BottomReflection();
 
             MurCopy();
         }
@@ -303,12 +301,25 @@ namespace wavemodel
             for (int i = 1; i < Nx - 1; i++)
                 for (int j = 1; j < Ny - 1; j++)
                 {
+                    
+                    int minKX = Math.Min(Math.Min(this.maxK[i + 1, j], this.maxK[i - 1, j]), maxK[i, j]);
+                    int minKY = Math.Min(Math.Min(this.maxK[i, j + 1], this.maxK[i, j - 1]), maxK[i, j]);
                     int kMax = maxK[i, j];
-                    if (kMax > 2)
+
+                    if (minKX > 2 && minKY > 2)
                     {
-                            P0[i, j, kMax - 1] =
-                            reflectionCoefficient * P0[i, j, kMax - 1] + (1 - reflectionCoefficient) *
+
+                        float dUx = reflectionCoefficient * (P0[i + 1, j, minKX - 2] - P0[i - 1, j, minKX - 2]) / (2 * Step);
+                        float dUy = reflectionCoefficient * (P0[i, j + 1, minKY - 2] - P0[i, j - 1, minKY - 2]) / (2 * Step);
+                        P0[i, j, kMax - 1] =
+                            reflectionCoefficient * (P0[i, j, kMax - 1] + 
+                               Step * (-dUx * cosA2[i, j] - dUy * cosB2[i, j]) / cosY2[i, j]) 
+                               + (1 - reflectionCoefficient) *
                                 (MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1]);
+
+                        //P0[i, j, kMax - 1] = (float)(reflectionCoefficient * P0[i, j, kMax - 1] 
+                        //    + Step * (-dUx * cosA2[i, j] - dUy * cosB2[i, j]) / cosY2[i, j]);
+
                     }
                 }
         }
