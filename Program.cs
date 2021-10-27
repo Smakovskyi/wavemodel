@@ -63,7 +63,7 @@ namespace wavemodel
 		static void Main(/*string[] args*/)
         {
 			PDESolver pdeSolver = new PDESolver();
-			//Console.WriteLine(BathH.GetLength(0) + " ==== " + BathH.GetLength(1));
+			
 			for(int i=0; i <= Nx; i++)
             {
 				for(int j=0; j<=Ny; j++)
@@ -71,6 +71,7 @@ namespace wavemodel
 					BathH[i, j] = (float)(1500.0 - BathH[i, j]*15.0/25.0);
 				}
             }
+
             pdeSolver.Init(0.015f, Nx, Ny, Nz, BathH);
             pdeSolver.SetCoefficients(1000, BathC);
 

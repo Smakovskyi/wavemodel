@@ -1,10 +1,9 @@
-﻿
-using System;
+﻿using System;
 using System.IO;
 
 namespace wavemodel
 {
-    public class PDESolver
+    public class OldPDESolver
     {
         #region var
 
@@ -19,8 +18,6 @@ namespace wavemodel
         float[,,] MurX;
         float[,,] MurY;
         float[,,] MurZ;
-
-        float[,,] sourceValue;
         float[] velocityMur;
         float[,] bathymetry;
         int[,] maxK;
@@ -33,14 +30,14 @@ namespace wavemodel
         float tCurrent;
 
         float dt_dx_ro;
-        float [] dt_dx_vvro;
+        float[] dt_dx_vvro;
         float reflectionCoefficient = 0.2f;
 
         #endregion
 
         #region init
 
-        public void Init(float dt, int Nx, int Ny, int Nz, float [,] bathymetry)
+        public void Init(float dt, int Nx, int Ny, int Nz, float[,] bathymetry)
         {
             this.dt = dt;
 
@@ -51,37 +48,37 @@ namespace wavemodel
             this.bathymetry = bathymetry;
 
             datWriter = new StreamWriter("P_all.csv", false, System.Text.Encoding.Default);
-            
+
             InitMaxK();
             InitGrid();
             initAngles();
             MurInit();
-            
+
         }
 
-        
+
 
         public void SetCoefficients(float ro, float[] velocity)
         {
             velocityMur = new float[Nz];
-            for(int k = 0; k < Nz; k++)
+            for (int k = 0; k < Nz; k++)
                 velocityMur[k] = (velocity[k] * dt - Step) / (velocity[k] * dt + Step);
 
             dt_dx_ro = dt / (Step * ro);
             dt_dx_vvro = new float[Nz];
-            
-            for(int k = 0; k < Nz; k++)
+
+            for (int k = 0; k < Nz; k++)
                 dt_dx_vvro[k] = (dt / Step) * velocity[k] * velocity[k] * ro;
         }
 
         void InitGrid()
         {
-            #region init P0, Vx, Vy sourcs
+            #region init P0, Vx, Vy
 
             P0 = new float[Nx, Ny, Nz];
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for(int k = 0; k < Nz; k++)
+                    for (int k = 0; k < Nz; k++)
                         P0[i, j, k] = 0.0f;
 
             Vx = new float[Nx + 1, Ny, Nz];
@@ -91,21 +88,17 @@ namespace wavemodel
                         Vx[i, j, k] = 0.0f;
 
             Vy = new float[Nx, Ny + 1, Nz];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j <= Ny; j++)
-                    for(int k = 0; k < Nz; k++)
+            for (int i = 0; i < Nx; i++)
+                for (int j = 0; j <= Ny; j++)
+                    for (int k = 0; k < Nz; k++)
                         Vy[i, j, k] = 0.0f;
 
             Vz = new float[Nx, Ny, Nz + 1];
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
-                    for(int k = 0; k <= Nz; k++)
-                        Vz[i, j, k] = 0.0f;
-            sourceValue = new float[Nx, Ny, Nz];
             for (int i = 0; i < Nx; i++)
                 for (int j = 0; j < Ny; j++)
-                    for (int k = 0; k < Nz; k++)
-                        sourceValue[i, j, k] = 0.0f;
+                    for (int k = 0; k <= Nz; k++)
+                        Vz[i, j, k] = 0.0f;
+
             #endregion
 
 
@@ -168,7 +161,7 @@ namespace wavemodel
                 {
                     float dfx = (bathymetry[i + 1, j] - bathymetry[i, j]) / Step;
                     float dfy = (bathymetry[i, j + 1] - bathymetry[i, j]) / Step;
-                    float len =(float) Math.Sqrt(dfx * dfx + dfy * dfy + 1);
+                    float len = (float)Math.Sqrt(dfx * dfx + dfy * dfy + 1);
                     cosA2[i, j] = dfx / len;
                     cosB2[i, j] = dfy / len;
                     cosY2[i, j] = -1 / len;
@@ -200,9 +193,9 @@ namespace wavemodel
 
         //
 
-        float F(int i, int j, int  k, float t)
+        float F(int i, int j, int k, float t)
         {
-            if( (Math.Abs(i - Nx / 2) <= 2) &&
+            if ((Math.Abs(i - Nx / 2) <= 2) &&
                 (Math.Abs(j - Ny / 2) <= 2) &&
                 (Math.Abs(k - Nz / 2) <= 2) && t < 0.2)
             {
@@ -215,38 +208,25 @@ namespace wavemodel
 
         public void CalcNextStep()
         {
-            FillSource();
             UpdateV();
             UpdateP();
             MurBoundaries();
-            CleanSource();
 
             tCurrent += dt;
-        }
-
-        private void CleanSource()
-        {
-            
-        }
-
-        private void FillSource()
-        {
-            Point4d source = new Point4d();
-            //throw new NotImplementedException();
         }
 
         #region Boundaries
 
         private void MurBoundaries()
         {
-            
+
 
             #region X повне згасання сигналу
 
             // x == 0
             int ii = 0;
-            for(int j = 1; j < Ny - 1; j++)
-                for(int k = 0; k < maxK[ii,j]; k++)
+            for (int j = 1; j < Ny - 1; j++)
+                for (int k = 0; k < maxK[ii, j]; k++)
 
                     P0[0, j, k] =
                         MurX[1, j, k] +
@@ -255,7 +235,7 @@ namespace wavemodel
             // x == Lx
             ii = Nx;
             for (int j = 1; j < Ny - 1; j++)
-                for(int k = 0; k < maxK[ii,j]; k++)
+                for (int k = 0; k < maxK[ii, j]; k++)
 
                     P0[Nx - 1, j, k] =
                         MurX[2, j, k] +
@@ -267,8 +247,8 @@ namespace wavemodel
 
             // y == 0
             int jj = 0;
-            for(int i = 1; i < Nx - 1; i++)
-                for(int k = 0; k < maxK[i, jj]; k++)
+            for (int i = 1; i < Nx - 1; i++)
+                for (int k = 0; k < maxK[i, jj]; k++)
 
                     P0[i, 0, k] =
                         MurY[i, 1, k] +
@@ -276,8 +256,8 @@ namespace wavemodel
 
             // y == Ly
             jj = Ny;
-            for(int i = 1; i < Nx - 1; i++)
-                for(int k = 0; k < maxK[i, jj]; k++)
+            for (int i = 1; i < Nx - 1; i++)
+                for (int k = 0; k < maxK[i, jj]; k++)
 
                     P0[i, Ny - 1, k] =
                         MurY[i, 2, k] +
@@ -287,10 +267,12 @@ namespace wavemodel
             #endregion
 
             #region Z відбиття від поверхні і дна
-
-            #endregion
             TopReflection();
             BottomReflection();
+
+
+
+            #endregion
 
             MurCopy();
         }
@@ -307,7 +289,7 @@ namespace wavemodel
                     {
                         P0[i, j, 0] = reflectionCoefficient * P0[i, j, 0] +
                                 (1 - reflectionCoefficient) *
-                                (MurZ[i, j, 1] +(P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
+                                (MurZ[i, j, 1] + (P0[i, j, 1] - MurZ[i, j, 0]) * velocityMur[0]);
                     }
                 }
             }
@@ -316,43 +298,25 @@ namespace wavemodel
 
         private void BottomReflection()
         {
-            
+
             for (int i = 1; i < Nx - 1; i++)
                 for (int j = 1; j < Ny - 1; j++)
                 {
-                    
-                    int minKX = Math.Min(Math.Min(this.maxK[i + 1, j], this.maxK[i - 1, j]), maxK[i, j]);
-                    int minKY = Math.Min(Math.Min(this.maxK[i, j + 1], this.maxK[i, j - 1]), maxK[i, j]);
                     int kMax = maxK[i, j];
-                    
-                    if (minKX > 2 && minKY > 2)
+                    if (kMax > 2)
                     {
-
-                        float dUx = reflectionCoefficient * (P0[i + 1, j, minKX - 2] - P0[i - 1, j, minKX - 2]) / (2 * Step);
-                        float dUy = reflectionCoefficient * (P0[i, j + 1, minKY - 2] - P0[i, j - 1, minKY - 2]) / (2 * Step);
                         P0[i, j, kMax - 1] =
-                            reflectionCoefficient * (P0[i, j, kMax - 1] + 
-                               Step * (-dUx * cosA2[i, j] - dUy * cosB2[i, j]) / cosY2[i, j]) 
-                               + (1 - reflectionCoefficient) *
-                                (MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1]);
-
-                        //P0[i, j, kMax - 1] = (float)(reflectionCoefficient * P0[i, j, kMax - 1] 
-                        //    + Step * (-dUx * cosA2[i, j] - dUy * cosB2[i, j]) / cosY2[i, j]);
-
+                            /*reflectionCoefficient * P0[i, j, kMax - 1] + (1 - reflectionCoefficient) **/
+                            //P0[i, j, Nz - 2]                     P0[i, j, Nz - 1]
+                            (MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1]);
                     }
-                    
-                    /*if (kMax > 2)
-                    {
-                        P0[i, j, kMax - 1] = MurZ[i, j, 2] + (P0[i, j, kMax - 2] - MurZ[i, j, 3]) * velocityMur[kMax - 1];
-                    }*/
-
                 }
         }
 
         private void MurCopy()
         {
-            for(int j = 0; j < Ny; j++)
-                for(int k = 0; k < Nz; k++)
+            for (int j = 0; j < Ny; j++)
+                for (int k = 0; k < Nz; k++)
                 {
                     MurX[0, j, k] = P0[0, j, k];
                     MurX[1, j, k] = P0[1, j, k];
@@ -360,8 +324,8 @@ namespace wavemodel
                     MurX[3, j, k] = P0[Nx - 1, j, k];
                 }
 
-            for(int i = 0; i < Nx; i++)
-                for(int k = 0; k < Nz; k++)
+            for (int i = 0; i < Nx; i++)
+                for (int k = 0; k < Nz; k++)
                 {
                     MurY[i, 0, k] = P0[i, 0, k];
                     MurY[i, 1, k] = P0[i, 1, k];
@@ -369,8 +333,8 @@ namespace wavemodel
                     MurY[i, 3, k] = P0[i, Ny - 1, k];
                 }
 
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
+            for (int i = 0; i < Nx; i++)
+                for (int j = 0; j < Ny; j++)
                 {
                     MurZ[i, j, 0] = P0[i, j, 0];
                     MurZ[i, j, 1] = P0[i, j, 1];
@@ -396,7 +360,7 @@ namespace wavemodel
                     for (int k = 0; k < MaxK; k++)
                         Vx[i, j, k] -= dt_dx_ro * (P0[i, j, k] - P0[i - 1, j, k]);
                 }
-                    
+
 
             for (int i = 0; i < Nx; i++)
                 for (int j = 1; j < Ny; j++)
@@ -424,7 +388,7 @@ namespace wavemodel
                 for (int j = 0; j < Ny; j++)
                 {
 
-                    int MaxK = maxK[i, j]; 
+                    int MaxK = maxK[i, j];
                     for (int k = 0; k < MaxK; k++)
                     {
                         P0[i, j, k] -=
@@ -461,8 +425,8 @@ namespace wavemodel
         {
             using StreamWriter outWriter = new StreamWriter(fileName, false, System.Text.Encoding.Default);
 
-            for(int i = 0; i < Nx; i++)
-                for(int j = 0; j < Ny; j++)
+            for (int i = 0; i < Nx; i++)
+                for (int j = 0; j < Ny; j++)
                     outWriter.WriteLine((Step * i + " " + Step * j + " " + P0[i, j, Nz / 2]).Replace(',', '.'));
         }
         public float GettCurrent()
@@ -473,3 +437,4 @@ namespace wavemodel
         #endregion
     }
 }
+
